@@ -1,0 +1,180 @@
+from fastapi import APIRouter, Depends, HTTPException, status, Query
+from sqlalchemy.orm import Session
+from typing import List, Optional
+from app.models.database import get_db
+from app.models.terrain import Terrain
+from app.models.user import User, UserRole
+from app.schemas.terrain import TerrainCreate, TerrainUpdate, TerrainResponse
+from app.routes.auth import get_current_user
+
+router = APIRouter()
+
+
+def get_admin_user(current_user: User = Depends(get_current_user)):
+    """
+    Vérifier que l'utilisateur est admin
+    """
+    if current_user.role != UserRole.admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough permissions"
+        )
+    return current_user
+
+
+@router.get("/", response_model=List[TerrainResponse])
+def get_terrains(
+    skip: int = Query(0, ge=0, description="Number of terrains to skip"),
+    limit: int = Query(100, ge=1, le=1000, description="Number of terrains to return"),
+    active_only: bool = Query(True, description="Filter only active terrains"),
+    db: Session = Depends(get_db)
+):
+    """
+    Récupérer la liste des terrains
+    """
+    query = db.query(Terrain)
+    
+    if active_only:
+        query = query.filter(Terrain.is_active == True)
+    
+    terrains = query.offset(skip).limit(limit).all()
+    return terrains
+
+
+@router.get("/{terrain_id}", response_model=TerrainResponse)
+def get_terrain(terrain_id: int, db: Session = Depends(get_db)):
+    """
+    Récupérer un terrain par son ID
+    """
+    terrain = db.query(Terrain).filter(Terrain.id == terrain_id).first()
+    
+    if not terrain:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Terrain not found"
+        )
+    
+    return terrain
+
+
+@router.post("/", response_model=TerrainResponse)
+def create_terrain(
+    terrain_data: TerrainCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_admin_user)
+):
+    """
+    Créer un nouveau terrain (Admin uniquement)
+    """
+    # Vérifier si un terrain avec le même nom existe déjà
+    existing_terrain = db.query(Terrain).filter(Terrain.name == terrain_data.name).first()
+    if existing_terrain:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A terrain with this name already exists"
+        )
+    
+    db_terrain = Terrain(**terrain_data.dict())
+    db.add(db_terrain)
+    db.commit()
+    db.refresh(db_terrain)
+    
+    return db_terrain
+
+
+@router.put("/{terrain_id}", response_model=TerrainResponse)
+def update_terrain(
+    terrain_id: int,
+    terrain_data: TerrainUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_admin_user)
+):
+    """
+    Mettre à jour un terrain (Admin uniquement)
+    """
+    terrain = db.query(Terrain).filter(Terrain.id == terrain_id).first()
+    
+    if not terrain:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Terrain not found"
+        )
+    
+    # Vérifier si le nouveau nom existe déjà (si fourni)
+    if terrain_data.name and terrain_data.name != terrain.name:
+        existing_terrain = db.query(Terrain).filter(Terrain.name == terrain_data.name).first()
+        if existing_terrain:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="A terrain with this name already exists"
+            )
+    
+    # Mettre à jour les champs fournis
+    update_data = terrain_data.dict(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(terrain, field, value)
+    
+    db.commit()
+    db.refresh(terrain)
+    
+    return terrain
+
+
+@router.delete("/{terrain_id}")
+def delete_terrain(
+    terrain_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_admin_user)
+):
+    """
+    Supprimer un terrain (Admin uniquement)
+    """
+    terrain = db.query(Terrain).filter(Terrain.id == terrain_id).first()
+    
+    if not terrain:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Terrain not found"
+        )
+    
+    # Vérifier s'il y a des réservations actives
+    from app.models.reservation import Reservation, ReservationStatus
+    active_reservations = db.query(Reservation).filter(
+        Reservation.terrain_id == terrain_id,
+        Reservation.status.in_([ReservationStatus.pending, ReservationStatus.confirmed])
+    ).first()
+    
+    if active_reservations:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot delete terrain with active reservations"
+        )
+    
+    db.delete(terrain)
+    db.commit()
+    
+    return {"message": "Terrain deleted successfully"}
+
+
+@router.patch("/{terrain_id}/toggle-active", response_model=TerrainResponse)
+def toggle_terrain_active(
+    terrain_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_admin_user)
+):
+    """
+    Activer/Désactiver un terrain (Admin uniquement)
+    """
+    terrain = db.query(Terrain).filter(Terrain.id == terrain_id).first()
+    
+    if not terrain:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Terrain not found"
+        )
+    
+    terrain.is_active = not terrain.is_active
+    db.commit()
+    db.refresh(terrain)
+    
+    return terrain

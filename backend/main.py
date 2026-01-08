@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.models.database import engine, Base
+# Import des modèles pour créer les tables
+from app.models import user, terrain, reservation
 from app.routes import auth, terrains, reservations
 
 # Créer les tables dans la base de données
