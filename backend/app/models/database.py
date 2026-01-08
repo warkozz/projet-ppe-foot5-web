@@ -2,16 +2,19 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from dotenv import load_dotenv
+from app.config import get_settings
 
-# Charger les variables d'environnement
-load_dotenv()
+# Charger la configuration
+settings = get_settings()
 
 # URL de connexion à la base de données
-DATABASE_URL = os.getenv("DATABASE_URL", "mysql+pymysql://root:@localhost:3306/foot5")
+DATABASE_URL = settings.DATABASE_URL
 
 # Créer l'engine SQLAlchemy
-engine = create_engine(DATABASE_URL)
+engine = create_engine(
+    DATABASE_URL,
+    echo=settings.DEBUG  # Log SQL queries in debug mode
+)
 
 # Créer la session
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

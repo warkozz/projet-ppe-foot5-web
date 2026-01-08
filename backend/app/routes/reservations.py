@@ -1,15 +1,19 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_
 from typing import List, Optional
-from datetime import datetime, timedelta
-from decimal import Decimal
+from datetime import datetime, date
 from app.models.database import get_db
-from app.models.reservation import Reservation, ReservationStatus
+from app.models.reservation import Reservation
 from app.models.terrain import Terrain
-from app.models.user import User, UserRole
+from app.models.user import User
 from app.schemas.reservation import ReservationCreate, ReservationUpdate, ReservationResponse
 from app.routes.auth import get_current_user
+from app.services.reservation_service import (
+    check_reservation_conflict,
+    get_available_time_slots,
+    get_terrain_schedule,
+    validate_reservation_time
+)
 
 router = APIRouter()
 
@@ -18,7 +22,7 @@ def get_admin_user(current_user: User = Depends(get_current_user)):
     """
     Vérifier que l'utilisateur est admin
     """
-    if current_user.role != UserRole.admin:
+    if current_user.role not in ["admin", "superadmin"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
@@ -26,56 +30,26 @@ def get_admin_user(current_user: User = Depends(get_current_user)):
     return current_user
 
 
-def calculate_price(terrain: Terrain, start_time: datetime, end_time: datetime) -> Decimal:
-    """
-    Calculer le prix total d'une réservation
-    """
-    duration = end_time - start_time
-    hours = Decimal(str(duration.total_seconds() / 3600))
-    return terrain.price_per_hour * hours
-
-
-def check_terrain_availability(db: Session, terrain_id: int, start_time: datetime, end_time: datetime, exclude_reservation_id: Optional[int] = None):
-    """
-    Vérifier la disponibilité d'un terrain pour une période donnée
-    """
-    query = db.query(Reservation).filter(
-        Reservation.terrain_id == terrain_id,
-        Reservation.status.in_([ReservationStatus.pending, ReservationStatus.confirmed]),
-        or_(
-            and_(Reservation.start_time <= start_time, Reservation.end_time > start_time),
-            and_(Reservation.start_time < end_time, Reservation.end_time >= end_time),
-            and_(Reservation.start_time >= start_time, Reservation.end_time <= end_time)
-        )
-    )
-    
-    if exclude_reservation_id:
-        query = query.filter(Reservation.id != exclude_reservation_id)
-    
-    conflicting_reservation = query.first()
-    return conflicting_reservation is None
-
-
 @router.get("/", response_model=List[ReservationResponse])
 def get_reservations(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    status_filter: Optional[ReservationStatus] = Query(None),
+    status_filter: Optional[str] = Query(None),
     terrain_id: Optional[int] = Query(None),
-    start_date: Optional[datetime] = Query(None),
-    end_date: Optional[datetime] = Query(None),
+    start_date: Optional[date] = Query(None),
+    end_date: Optional[date] = Query(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """
     Récupérer les réservations
     - Admin: peut voir toutes les réservations
-    - Client: ne peut voir que ses propres réservations
+    - User: ne peut voir que ses propres réservations
     """
     query = db.query(Reservation)
     
     # Filtres selon le rôle
-    if current_user.role == UserRole.client:
+    if current_user.role == "user":
         query = query.filter(Reservation.user_id == current_user.id)
     
     # Filtres optionnels
@@ -86,12 +60,13 @@ def get_reservations(
         query = query.filter(Reservation.terrain_id == terrain_id)
     
     if start_date:
-        query = query.filter(Reservation.start_time >= start_date)
+        start_datetime = datetime.combine(start_date, datetime.min.time())
+        query = query.filter(Reservation.start >= start_datetime)
     
     if end_date:
-        query = query.filter(Reservation.end_time <= end_date)
+        end_datetime = datetime.combine(end_date, datetime.max.time())
+        query = query.filter(Reservation.end <= end_datetime)
     
-    # Inclure les relations
     reservations = query.offset(skip).limit(limit).all()
     return reservations
 
@@ -114,7 +89,7 @@ def get_reservation(
         )
     
     # Vérifier les permissions
-    if current_user.role == UserRole.client and reservation.user_id != current_user.id:
+    if current_user.role == "user" and reservation.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
@@ -135,7 +110,7 @@ def create_reservation(
     # Vérifier que le terrain existe et est actif
     terrain = db.query(Terrain).filter(
         Terrain.id == reservation_data.terrain_id,
-        Terrain.is_active == True
+        Terrain.active == True
     ).first()
     
     if not terrain:
@@ -144,30 +119,32 @@ def create_reservation(
             detail="Terrain not found or inactive"
         )
     
+    # Valider les horaires
+    is_valid, message = validate_reservation_time(reservation_data.start, reservation_data.end)
+    if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=message
+        )
+    
     # Vérifier la disponibilité du terrain
-    if not check_terrain_availability(
+    if check_reservation_conflict(
         db, reservation_data.terrain_id, 
-        reservation_data.start_time, reservation_data.end_time
+        reservation_data.start, reservation_data.end
     ):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Terrain is not available for the requested time slot"
         )
     
-    # Calculer le prix total
-    total_price = calculate_price(terrain, reservation_data.start_time, reservation_data.end_time)
-    
     # Créer la réservation
     db_reservation = Reservation(
         user_id=current_user.id,
         terrain_id=reservation_data.terrain_id,
-        start_time=reservation_data.start_time,
-        end_time=reservation_data.end_time,
-        total_price=total_price,
-        status=ReservationStatus.pending,
-        notes=reservation_data.notes,
-        contact_phone=reservation_data.contact_phone,
-        participants_count=reservation_data.participants_count
+        start=reservation_data.start,
+        end=reservation_data.end,
+        status="confirmed",
+        notes=reservation_data.notes
     )
     
     db.add(db_reservation)
@@ -196,35 +173,39 @@ def update_reservation(
         )
     
     # Vérifier les permissions
-    if current_user.role == UserRole.client:
+    if current_user.role == "user":
         if reservation.user_id != current_user.id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Not enough permissions"
             )
-        # Les clients ne peuvent modifier que les réservations en attente
-        if reservation.status != ReservationStatus.pending:
+        # Les clients ne peuvent modifier que les réservations confirmées
+        if reservation.status not in ["confirmed", "pending"]:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Can only modify pending reservations"
+                detail="Can only modify confirmed or pending reservations"
             )
     
     # Si on modifie les heures, vérifier la disponibilité
-    if reservation_data.start_time or reservation_data.end_time:
-        new_start = reservation_data.start_time or reservation.start_time
-        new_end = reservation_data.end_time or reservation.end_time
+    if reservation_data.start or reservation_data.end:
+        new_start = reservation_data.start or reservation.start
+        new_end = reservation_data.end or reservation.end
         
-        if not check_terrain_availability(
+        # Valider les nouveaux horaires
+        is_valid, message = validate_reservation_time(new_start, new_end)
+        if not is_valid:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=message
+            )
+        
+        if check_reservation_conflict(
             db, reservation.terrain_id, new_start, new_end, reservation_id
         ):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="Terrain is not available for the requested time slot"
             )
-        
-        # Recalculer le prix si les heures changent
-        terrain = db.query(Terrain).filter(Terrain.id == reservation.terrain_id).first()
-        reservation.total_price = calculate_price(terrain, new_start, new_end)
     
     # Mettre à jour les champs
     update_data = reservation_data.dict(exclude_unset=True)
@@ -255,20 +236,20 @@ def cancel_reservation(
         )
     
     # Vérifier les permissions
-    if current_user.role == UserRole.client and reservation.user_id != current_user.id:
+    if current_user.role == "user" and reservation.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
         )
     
     # Vérifier que la réservation peut être annulée
-    if reservation.status in [ReservationStatus.cancelled, ReservationStatus.completed]:
+    if reservation.status == "cancelled":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Reservation cannot be cancelled"
+            detail="Reservation already cancelled"
         )
     
-    reservation.status = ReservationStatus.cancelled
+    reservation.status = "cancelled"
     db.commit()
     
     return {"message": "Reservation cancelled successfully"}
@@ -291,44 +272,66 @@ def confirm_reservation(
             detail="Reservation not found"
         )
     
-    if reservation.status != ReservationStatus.pending:
+    if reservation.status != "pending":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Only pending reservations can be confirmed"
         )
     
-    reservation.status = ReservationStatus.confirmed
+    reservation.status = "confirmed"
     db.commit()
     db.refresh(reservation)
     
     return reservation
 
 
-@router.get("/terrain/{terrain_id}/availability")
-def check_availability(
+@router.get("/availability/terrain/{terrain_id}")
+def check_terrain_availability(
     terrain_id: int,
-    start_time: datetime = Query(...),
-    end_time: datetime = Query(...),
+    date: date = Query(..., description="Date to check availability (YYYY-MM-DD)"),
     db: Session = Depends(get_db)
 ):
     """
-    Vérifier la disponibilité d'un terrain pour une période donnée
+    Vérifier la disponibilité d'un terrain pour une date donnée
+    Retourne les créneaux disponibles et occupés
+    """
+    schedule = get_terrain_schedule(db, terrain_id, date)
+    
+    if not schedule:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Terrain not found or inactive"
+        )
+    
+    return schedule
+
+
+@router.get("/availability/slots/{terrain_id}")
+def get_available_slots(
+    terrain_id: int,
+    date: date = Query(..., description="Date to check (YYYY-MM-DD)"),
+    db: Session = Depends(get_db)
+):
+    """
+    Récupérer uniquement les créneaux disponibles pour un terrain et une date
     """
     # Vérifier que le terrain existe
-    terrain = db.query(Terrain).filter(Terrain.id == terrain_id).first()
+    terrain = db.query(Terrain).filter(
+        Terrain.id == terrain_id,
+        Terrain.active == True
+    ).first()
+    
     if not terrain:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Terrain not found"
+            detail="Terrain not found or inactive"
         )
     
-    is_available = check_terrain_availability(db, terrain_id, start_time, end_time)
-    estimated_price = calculate_price(terrain, start_time, end_time) if is_available else None
+    available_slots = get_available_time_slots(db, terrain_id, date)
     
     return {
-        "available": is_available,
         "terrain_id": terrain_id,
-        "start_time": start_time,
-        "end_time": end_time,
-        "estimated_price": estimated_price
+        "terrain_name": terrain.name,
+        "date": date.isoformat(),
+        "available_slots": [slot for slot in available_slots if slot["available"]]
     }
