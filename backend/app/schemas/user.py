@@ -1,21 +1,18 @@
-from pydantic import BaseModel, EmailStr, Field, validator
-from typing import Optional, List
-from datetime import datetime
+from pydantic import BaseModel, EmailStr, Field
+from typing import Optional
 from enum import Enum
 
 
 class UserRole(str, Enum):
+    superadmin = "superadmin"
     admin = "admin"
-    client = "client"
+    user = "user"  # Correspond à "client"
 
 
 class UserBase(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
-    email: EmailStr
-    first_name: str = Field(..., min_length=2, max_length=50)
-    last_name: str = Field(..., min_length=2, max_length=50)
-    phone: Optional[str] = Field(None, max_length=20)
-    role: UserRole = UserRole.client
+    email: EmailStr = Field(..., max_length=120)
+    role: UserRole = UserRole.user
 
 
 class UserCreate(UserBase):
@@ -24,16 +21,13 @@ class UserCreate(UserBase):
 
 class UserUpdate(BaseModel):
     username: Optional[str] = Field(None, min_length=3, max_length=50)
-    email: Optional[EmailStr] = None
-    first_name: Optional[str] = Field(None, min_length=2, max_length=50)
-    last_name: Optional[str] = Field(None, min_length=2, max_length=50)
-    phone: Optional[str] = Field(None, max_length=20)
+    email: Optional[EmailStr] = Field(None, max_length=120)
+    active: Optional[bool] = None
 
 
 class UserResponse(UserBase):
     id: int
-    created_at: datetime
-    updated_at: Optional[datetime]
+    active: bool
 
     class Config:
         from_attributes = True
