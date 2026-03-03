@@ -64,16 +64,13 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
             detail="Username or email already registered"
         )
     
-    # Créer le nouvel utilisateur
+    # Créer le nouvel utilisateur (rôle forcé à 'user' - pas d'auto-promotion)
     hashed_password = hash_password(user_data.password)
     db_user = User(
         username=user_data.username,
         email=user_data.email,
         password_hash=hashed_password,
-        first_name=user_data.first_name,
-        last_name=user_data.last_name,
-        phone=user_data.phone,
-        role=user_data.role
+        role="user"
     )
     
     db.add(db_user)
