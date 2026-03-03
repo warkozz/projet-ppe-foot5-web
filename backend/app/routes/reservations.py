@@ -128,10 +128,11 @@ def create_reservation(
         )
     
     # Vérifier la disponibilité du terrain
-    if check_reservation_conflict(
-        db, reservation_data.terrain_id, 
+    has_conflict, _ = check_reservation_conflict(
+        db, reservation_data.terrain_id,
         reservation_data.start, reservation_data.end
-    ):
+    )
+    if has_conflict:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Terrain is not available for the requested time slot"
@@ -199,9 +200,10 @@ def update_reservation(
                 detail=message
             )
         
-        if check_reservation_conflict(
+        has_conflict, _ = check_reservation_conflict(
             db, reservation.terrain_id, new_start, new_end, reservation_id
-        ):
+        )
+        if has_conflict:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="Terrain is not available for the requested time slot"

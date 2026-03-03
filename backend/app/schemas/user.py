@@ -12,7 +12,6 @@ class UserRole(str, Enum):
 class UserBase(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
     email: EmailStr = Field(..., max_length=120)
-    role: UserRole = UserRole.user
 
 
 class UserCreate(UserBase):
@@ -27,6 +26,7 @@ class UserUpdate(BaseModel):
 
 class UserResponse(UserBase):
     id: int
+    role: str  # lecture seule - non settable par le client
     active: bool
 
     class Config:
