@@ -2,6 +2,10 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { reservationAPI, terrainsAPI } from '../services/api';
+import Button from '../components/ui/Button';
+import Badge from '../components/ui/Badge';
+import Alert from '../components/ui/Alert';
+import Spinner from '../components/ui/Spinner';
 
 interface Reservation {
   id: number;
@@ -19,11 +23,11 @@ interface Slot {
   available: boolean;
 }
 
-const statusLabel: Record<string, { label: string; classes: string }> = {
-  confirmed: { label: 'Confirmée',  classes: 'bg-green-100 text-green-700' },
-  pending:   { label: 'En attente', classes: 'bg-yellow-100 text-yellow-700' },
-  cancelled: { label: 'Annulée',   classes: 'bg-red-100 text-red-600' },
-  completed: { label: 'Terminée',  classes: 'bg-gray-100 text-gray-500' },
+const statusConfig: Record<string, { label: string; variant: 'green'|'yellow'|'red'|'gray'; bar: string }> = {
+  confirmed: { label: 'Confirmée',  variant: 'green',  bar: 'border-l-green-400'  },
+  pending:   { label: 'En attente', variant: 'yellow', bar: 'border-l-yellow-400' },
+  cancelled: { label: 'Annulée',   variant: 'red',    bar: 'border-l-red-400'    },
+  completed: { label: 'Terminée',  variant: 'gray',   bar: 'border-l-gray-300'   },
 };
 
 const formatDate = (iso: string) =>
@@ -117,12 +121,18 @@ const EditModal: React.FC<{
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
-        {/* Header */}
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+        {/* Header modal */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900">Modifier la réservation</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div>
+            <h2 className="text-base font-bold text-gray-900">Modifier la réservation</h2>
+            <p className="text-xs text-gray-400 mt-0.5">Choisissez une nouvelle date et un créneau</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -130,34 +140,43 @@ const EditModal: React.FC<{
 
         <div className="px-6 py-5 space-y-5">
           {/* Terrain (lecture seule) */}
-          <div>
-            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Terrain</p>
-            <p className="font-semibold text-gray-900">{reservation.terrain?.name}</p>
+          <div className="bg-gray-50 rounded-xl px-4 py-3">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Terrain</p>
+            <p className="font-semibold text-gray-900 text-sm">{reservation.terrain?.name}</p>
             {reservation.terrain?.location && (
-              <p className="text-xs text-gray-400 mt-0.5">📍 {reservation.terrain.location}</p>
+              <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                {reservation.terrain.location}
+              </p>
             )}
           </div>
 
           {/* Date */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Date</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Date</label>
             <input
               type="date"
               value={date}
               min={todayISO()}
               onChange={e => setDate(e.target.value)}
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm
-                         focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white
+                         focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition hover:border-gray-300"
             />
           </div>
 
           {/* Créneaux */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Créneau</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Créneau</label>
             {slotsLoading ? (
-              <p className="text-sm text-gray-400 py-2">Chargement des créneaux…</p>
+              <div className="flex items-center gap-2 py-3 text-sm text-gray-400">
+                <Spinner size="sm" /> Chargement des créneaux…
+              </div>
             ) : slots.length === 0 ? (
-              <p className="text-sm text-gray-400 py-2">Aucun créneau disponible ce jour.</p>
+              <p className="text-sm text-gray-400 py-3 bg-gray-50 rounded-xl px-4">Aucun créneau disponible ce jour.</p>
             ) : (
               <div className="grid grid-cols-3 gap-2">
                 {slots.map(s => (
@@ -166,12 +185,12 @@ const EditModal: React.FC<{
                     type="button"
                     disabled={!s.available}
                     onClick={() => s.available && setSelectedSlot(s)}
-                    className={`py-2 px-1 rounded-lg text-sm font-medium border transition-colors
+                    className={`py-2.5 px-1 rounded-xl text-xs font-semibold border transition-all
                       ${!s.available
                         ? 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed'
                         : selectedSlot?.start_time === s.start_time
-                          ? 'bg-brand-500 text-white border-brand-500'
-                          : 'bg-white text-gray-700 border-gray-200 hover:border-brand-400 hover:text-brand-600'
+                          ? 'bg-brand-500 text-white border-brand-500 shadow-sm shadow-brand-500/30'
+                          : 'bg-white text-gray-600 border-gray-200 hover:border-brand-400 hover:text-brand-600 hover:bg-brand-50'
                       }`}
                   >
                     {s.label}
@@ -183,42 +202,38 @@ const EditModal: React.FC<{
 
           {/* Notes */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Notes (optionnel)</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+              Notes <span className="font-normal text-gray-400">(optionnel)</span>
+            </label>
             <textarea
               value={notes}
               onChange={e => setNotes(e.target.value)}
               rows={2}
               maxLength={250}
               placeholder="Informations complémentaires…"
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm
-                         focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent resize-none"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white
+                         focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent resize-none transition"
             />
           </div>
 
-          {error && (
-            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-              ⚠️ {error}
-            </p>
-          )}
+          {error && <Alert variant="error">{error}</Alert>}
         </div>
 
         {/* Footer */}
         <div className="flex gap-3 px-6 py-4 border-t border-gray-100">
-          <button
-            onClick={onClose}
-            className="flex-1 py-2.5 border border-gray-200 text-gray-600 hover:bg-gray-50
-                       rounded-lg text-sm font-medium transition-colors"
-          >
+          <Button variant="secondary" size="md" className="flex-1" onClick={onClose}>
             Annuler
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="primary"
+            size="md"
+            className="flex-1"
+            loading={submitting}
+            disabled={!selectedSlot}
             onClick={handleSubmit}
-            disabled={submitting || !selectedSlot}
-            className="flex-1 py-2.5 bg-brand-500 hover:bg-brand-600 disabled:bg-brand-300
-                       text-white rounded-lg text-sm font-semibold transition-colors disabled:cursor-not-allowed"
           >
-            {submitting ? 'Enregistrement…' : 'Confirmer'}
-          </button>
+            Confirmer
+          </Button>
         </div>
       </div>
     </div>
@@ -273,10 +288,12 @@ const MonEspacePage: React.FC = () => {
   };
 
   const active = reservations.filter(r => r.status === 'confirmed' || r.status === 'pending');
-  const past   = reservations.filter(r => r.status === 'cancelled' || r.status === 'completed');
+  const past   = reservations.filter(r => r.status === 'cancelled'  || r.status === 'completed');
+
+  const initials = (user?.username ?? '?').slice(0, 2).toUpperCase();
 
   return (
-    <main className="min-h-screen bg-gray-50 py-12 px-4">
+    <main className="min-h-screen bg-slate-50">
       {editingReservation && (
         <EditModal
           reservation={editingReservation}
@@ -285,86 +302,99 @@ const MonEspacePage: React.FC = () => {
         />
       )}
 
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="mb-8 flex items-start justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Mon espace</h1>
-            <p className="text-gray-500 mt-1">
-              Bonjour, <span className="font-medium text-gray-700">{user?.username}</span>
-            </p>
+      {/* Page header */}
+      <div className="bg-white border-b border-gray-100">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-brand-100 flex items-center justify-center text-brand-700 font-bold text-lg">
+                {initials}
+              </div>
+              <div>
+                <h1 className="text-2xl font-extrabold text-gray-900">Mon espace</h1>
+                <p className="text-sm text-gray-400 mt-0.5">
+                  Bonjour, <span className="font-semibold text-gray-600">{user?.username}</span> 👋
+                </p>
+              </div>
+            </div>
+            <Link
+              to="/profil"
+              className="hidden sm:flex items-center gap-2 text-sm text-gray-500 hover:text-brand-600
+                         border border-gray-200 hover:border-brand-300 rounded-xl px-4 py-2.5 transition-colors bg-white shadow-sm"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              Mon profil
+            </Link>
           </div>
-          <Link
-            to="/profil"
-            className="flex items-center gap-2 text-sm text-gray-500 hover:text-brand-600
-                       border border-gray-200 hover:border-brand-300 rounded-lg px-3 py-2
-                       transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-            Mon profil
-          </Link>
         </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
 
         {/* Toasts */}
         {cancelSuccess && (
-          <div className="mb-6 flex items-center gap-3 bg-green-50 border border-green-200 text-green-700 rounded-xl px-4 py-3 text-sm">
-            <span>✅</span><span>{cancelSuccess}</span>
-          </div>
+          <div className="mb-6"><Alert variant="success">{cancelSuccess}</Alert></div>
         )}
         {editSuccess && (
-          <div className="mb-6 flex items-center gap-3 bg-brand-50 border border-brand-200 text-brand-700 rounded-xl px-4 py-3 text-sm">
-            <span>✅</span><span>{editSuccess}</span>
-          </div>
+          <div className="mb-6"><Alert variant="info">{editSuccess}</Alert></div>
         )}
 
-        {/* Action principale */}
+        {/* CTA nouvelle réservation */}
         <div className="mb-10">
           <Link
             to="/reserver"
-            className="inline-flex items-center gap-3 bg-brand-500 hover:bg-brand-600 text-white
-                       rounded-xl px-6 py-4 font-semibold text-lg transition-colors"
+            className="group inline-flex items-center gap-4 bg-white border-2 border-brand-200 hover:border-brand-500
+                       rounded-2xl px-6 py-5 transition-all shadow-sm hover:shadow-md w-full sm:w-auto"
           >
-            <span className="text-2xl">📅</span>
-            <div>
-              <p>Nouvelle réservation</p>
-              <p className="text-brand-100 text-sm font-normal">Choisir un terrain et un créneau</p>
+            <div className="w-12 h-12 bg-brand-500 rounded-xl flex items-center justify-center text-white text-xl shadow-md shadow-brand-500/30 group-hover:scale-105 transition-transform">
+              📅
             </div>
+            <div>
+              <p className="font-bold text-gray-900 text-[15px]">Nouvelle réservation</p>
+              <p className="text-sm text-gray-400 mt-0.5">Choisir un terrain et un créneau</p>
+            </div>
+            <svg className="w-5 h-5 text-gray-300 ml-auto group-hover:text-brand-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
           </Link>
         </div>
 
         {/* Réservations actives */}
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Réservations à venir
-            {!loading && <span className="ml-2 text-sm font-normal text-gray-400">({active.length})</span>}
-          </h2>
+        <section className="mb-10">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-gray-900">Réservations à venir</h2>
+            {!loading && (
+              <Badge variant={active.length > 0 ? 'brand' : 'gray'}>{active.length}</Badge>
+            )}
+          </div>
 
           {loading ? (
-            <div className="bg-white rounded-xl border border-gray-200 py-16 text-center text-gray-400">
-              <p className="text-2xl mb-2">⏳</p>
-              <p>Chargement...</p>
+            <div className="bg-white rounded-2xl border border-gray-100 py-16 flex flex-col items-center gap-4 text-gray-400 shadow-sm">
+              <Spinner size="md" />
+              <p className="text-sm">Chargement…</p>
             </div>
           ) : error ? (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center text-red-600">
-              <p>{error}</p>
-              <button onClick={loadReservations} className="mt-3 text-sm underline">Réessayer</button>
+            <div>
+              <Alert variant="error">{error}</Alert>
+              <button onClick={loadReservations} className="mt-3 text-sm text-brand-500 hover:underline">Réessayer</button>
             </div>
           ) : active.length === 0 ? (
-            <div className="bg-white rounded-xl border border-gray-200 py-16 text-center text-gray-400">
-              <p className="text-4xl mb-3">📭</p>
-              <p className="font-medium">Aucune réservation à venir</p>
-              <p className="text-sm mt-1">
-                <Link to="/reserver" className="text-brand-500 hover:underline">Réserver un terrain</Link>
-              </p>
+            <div className="bg-white rounded-2xl border border-gray-100 py-16 flex flex-col items-center gap-3 text-gray-400 shadow-sm">
+              <span className="text-5xl">📭</span>
+              <p className="font-semibold text-gray-600">Aucune réservation à venir</p>
+              <Link to="/reserver" className="text-sm text-brand-500 hover:text-brand-600 hover:underline font-medium">
+                Réserver un terrain →
+              </Link>
             </div>
           ) : (
             <div className="space-y-3">
               {active.map(r => (
                 <ReservationCard
-                  key={r.id} r={r}
+                  key={r.id}
+                  r={r}
                   onCancel={handleCancel}
                   onEdit={setEditingReservation}
                   cancelling={cancelling}
@@ -377,14 +407,15 @@ const MonEspacePage: React.FC = () => {
         {/* Historique */}
         {!loading && past.length > 0 && (
           <section>
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              Historique
-              <span className="ml-2 text-sm font-normal text-gray-400">({past.length})</span>
-            </h2>
-            <div className="space-y-3">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-gray-900">Historique</h2>
+              <Badge variant="gray">{past.length}</Badge>
+            </div>
+            <div className="space-y-3 opacity-80">
               {past.map(r => (
                 <ReservationCard
-                  key={r.id} r={r}
+                  key={r.id}
+                  r={r}
                   onCancel={handleCancel}
                   onEdit={setEditingReservation}
                   cancelling={cancelling}
@@ -404,46 +435,72 @@ const ReservationCard: React.FC<{
   onEdit: (r: Reservation) => void;
   cancelling: number | null;
 }> = ({ r, onCancel, onEdit, cancelling }) => {
-  const s = statusLabel[r.status] ?? { label: r.status, classes: 'bg-gray-100 text-gray-500' };
+  const cfg = statusConfig[r.status] ?? { label: r.status, variant: 'gray' as const, bar: 'border-l-gray-300' };
   const canAct = r.status === 'confirmed' || r.status === 'pending';
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5 flex items-start justify-between gap-4">
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${s.classes}`}>{s.label}</span>
-          {r.terrain && (
-            <span className="text-sm font-semibold text-gray-900 truncate">{r.terrain.name}</span>
+    <div className={`bg-white rounded-2xl border border-gray-100 border-l-4 ${cfg.bar} shadow-sm overflow-hidden hover:shadow-md transition-all duration-200`}>
+      <div className="p-5 flex items-start justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          {/* Status + terrain */}
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <Badge variant={cfg.variant}>{cfg.label}</Badge>
+            {r.terrain && (
+              <span className="text-sm font-bold text-gray-900">{r.terrain.name}</span>
+            )}
+          </div>
+
+          {/* Date */}
+          <div className="flex items-center gap-2 text-sm text-gray-700 mb-1.5">
+            <svg className="w-4 h-4 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span className="capitalize">{formatDate(r.start)}</span>
+          </div>
+
+          {/* Heure */}
+          <div className="flex items-center gap-2 text-sm text-brand-600 font-semibold">
+            <svg className="w-4 h-4 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {formatTime(r.start)} – {formatTime(r.end)}
+          </div>
+
+          {/* Localisation */}
+          {r.terrain?.location && (
+            <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
+              <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              {r.terrain.location}
+            </p>
+          )}
+          {r.notes && (
+            <p className="text-xs text-gray-400 mt-1 italic">"{r.notes}"</p>
           )}
         </div>
-        <p className="text-sm text-gray-600 capitalize">{formatDate(r.start)}</p>
-        <p className="text-sm text-gray-500">{formatTime(r.start)} – {formatTime(r.end)}</p>
-        {r.terrain?.location && (
-          <p className="text-xs text-gray-400 mt-1">📍 {r.terrain.location}</p>
-        )}
-        {r.notes && <p className="text-xs text-gray-400 mt-1 italic">{r.notes}</p>}
-      </div>
 
-      {canAct && (
-        <div className="flex flex-col gap-2 flex-shrink-0">
-          <button
-            onClick={() => onEdit(r)}
-            className="text-sm text-brand-600 hover:text-brand-800 border border-brand-200
-                       hover:border-brand-400 px-3 py-1.5 rounded-lg transition-colors"
-          >
-            Modifier
-          </button>
-          <button
-            onClick={() => onCancel(r.id)}
-            disabled={cancelling === r.id}
-            className="text-sm text-red-500 hover:text-red-700 border border-red-200
-                       hover:border-red-400 px-3 py-1.5 rounded-lg transition-colors
-                       disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {cancelling === r.id ? '...' : 'Annuler'}
-          </button>
-        </div>
-      )}
+        {canAct && (
+          <div className="flex flex-col gap-2 flex-shrink-0">
+            <Button variant="outline" size="sm" onClick={() => onEdit(r)}>
+              Modifier
+            </Button>
+            <Button
+              variant="dangerGhost"
+              size="sm"
+              disabled={cancelling === r.id}
+              loading={cancelling === r.id}
+              onClick={() => onCancel(r.id)}
+            >
+              Annuler
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

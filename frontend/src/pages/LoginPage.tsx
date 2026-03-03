@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import LoginForm from '../components/auth/LoginForm';
 import RegisterForm from '../components/auth/RegisterForm';
+import Alert from '../components/ui/Alert';
 
 type AuthMode = 'login' | 'register';
 
@@ -14,11 +15,15 @@ const LoginPage: React.FC = () => {
   const [sessionExpired, setSessionExpired] = useState(false);
   const [registerSuccess, setRegisterSuccess] = useState(false);
 
-  // Page d'origine avant redirection vers /connexion
   const from = (location.state as any)?.from?.pathname || '/mon-espace';
 
+  // Ouvrir directement l'onglet inscription si ?tab=register
   useEffect(() => {
-    // Détecter si la session a expiré (flag posé par l'intercepteur Axios)
+    const params = new URLSearchParams(location.search);
+    if (params.get('tab') === 'register') setAuthMode('register');
+  }, [location.search]);
+
+  useEffect(() => {
     if (localStorage.getItem('session_expired')) {
       setSessionExpired(true);
       localStorage.removeItem('session_expired');
@@ -26,14 +31,10 @@ const LoginPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate(from, { replace: true });
-    }
+    if (isAuthenticated) navigate(from, { replace: true });
   }, [isAuthenticated, navigate, from]);
 
-  const handleLoginSuccess = () => {
-    navigate(from, { replace: true });
-  };
+  const handleLoginSuccess = () => navigate(from, { replace: true });
 
   const handleRegisterSuccess = () => {
     setRegisterSuccess(true);
@@ -41,68 +42,89 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 px-4">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            ⚽ <span className="text-brand-500">Football 5v5</span>
-          </h1>
-          <p className="text-gray-500">Réservez votre terrain en ligne</p>
-        </div>
-
-        {/* Banière session expirée */}
-        {sessionExpired && (
-          <div className="mb-4 p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm flex items-center gap-2">
-            <span>⏱️</span>
-            <span>Votre session a expiré. Reconnectez-vous pour continuer.</span>
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      {/* Top bar */}
+      <div className="py-6 px-4 text-center">
+        <Link to="/" className="inline-flex items-center gap-2.5">
+          <div className="w-9 h-9 bg-brand-500 rounded-xl flex items-center justify-center shadow-sm">
+            <span className="text-white text-lg">⚽</span>
           </div>
-        )}
+          <span className="font-extrabold text-gray-900 text-lg tracking-tight">
+            Football <span className="text-brand-500">5v5</span>
+          </span>
+        </Link>
+      </div>
 
-        {/* Banière inscription réussie */}
-        {registerSuccess && (
-          <div className="mb-4 p-3 rounded-lg bg-green-50 border border-green-200 text-green-800 text-sm flex items-center gap-2">
-            <span>✅</span>
-            <span>Compte créé avec succès ! Connectez-vous maintenant.</span>
-          </div>
-        )}
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="flex border-b border-gray-200">
-            <button
-              onClick={() => setAuthMode('login')}
-              className={`flex-1 py-3 text-sm font-semibold transition-colors ${
-                authMode === 'login'
-                  ? 'bg-brand-500 text-white'
-                  : 'text-gray-500 hover:bg-gray-50'
-              }`}
-            >
-              Connexion
-            </button>
-            <button
-              onClick={() => setAuthMode('register')}
-              className={`flex-1 py-3 text-sm font-semibold transition-colors ${
-                authMode === 'register'
-                  ? 'bg-brand-500 text-white'
-                  : 'text-gray-500 hover:bg-gray-50'
-              }`}
-            >
-              Inscription
-            </button>
+      {/* Card */}
+      <div className="flex-1 flex items-start justify-center px-4 pb-12">
+        <div className="w-full max-w-md">
+          {/* Heading */}
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-extrabold text-gray-900 mb-1">
+              {authMode === 'login' ? 'Bon retour 👋' : 'Créer un compte'}
+            </h1>
+            <p className="text-sm text-gray-500">
+              {authMode === 'login'
+                ? 'Connectez-vous pour accéder à vos réservations'
+                : 'Rejoignez-nous gratuitement pour réserver un terrain'}
+            </p>
           </div>
 
-          <div className="p-6">
-            {authMode === 'login' ? (
-              <LoginForm
-                onSuccess={handleLoginSuccess}
-                onSwitchToRegister={() => setAuthMode('register')}
-              />
-            ) : (
-              <RegisterForm
-                onSuccess={handleRegisterSuccess}
-                onSwitchToLogin={() => setAuthMode('login')}
-              />
-            )}
+          {/* Alerts */}
+          {sessionExpired && (
+            <div className="mb-5">
+              <Alert variant="warning">
+                Votre session a expiré. Reconnectez-vous pour continuer.
+              </Alert>
+            </div>
+          )}
+          {registerSuccess && (
+            <div className="mb-5">
+              <Alert variant="success">
+                Compte créé avec succès ! Connectez-vous maintenant.
+              </Alert>
+            </div>
+          )}
+
+          {/* Main card */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            {/* Tabs */}
+            <div className="flex p-1.5 gap-1.5 border-b border-gray-100 bg-gray-50">
+              {(['login', 'register'] as AuthMode[]).map(mode => (
+                <button
+                  key={mode}
+                  onClick={() => setAuthMode(mode)}
+                  className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all ${
+                    authMode === mode
+                      ? 'bg-white text-brand-600 shadow-sm border border-gray-100'
+                      : 'text-gray-400 hover:text-gray-700'
+                  }`}
+                >
+                  {mode === 'login' ? 'Connexion' : 'Inscription'}
+                </button>
+              ))}
+            </div>
+
+            <div className="p-6">
+              {authMode === 'login' ? (
+                <LoginForm
+                  onSuccess={handleLoginSuccess}
+                  onSwitchToRegister={() => setAuthMode('register')}
+                />
+              ) : (
+                <RegisterForm
+                  onSuccess={handleRegisterSuccess}
+                  onSwitchToLogin={() => setAuthMode('login')}
+                />
+              )}
+            </div>
           </div>
+
+          {/* Footer */}
+          <p className="text-center text-xs text-gray-400 mt-6">
+            En continuant, vous acceptez nos{' '}
+            <span className="underline cursor-default">conditions d'utilisation</span>.
+          </p>
         </div>
       </div>
     </div>

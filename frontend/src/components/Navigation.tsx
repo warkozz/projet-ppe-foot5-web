@@ -11,100 +11,142 @@ const Navigation: React.FC = () => {
   const handleLogout = () => {
     logout();
     navigate('/');
+    setMenuOpen(false);
   };
 
   const isActive = (path: string) => location.pathname === path;
 
+  const navLinkClass = (path: string) =>
+    `text-[13px] font-extrabold uppercase tracking-wider transition-colors ${
+      isActive(path) ? 'text-brand-500' : 'text-gray-900 hover:text-brand-500'
+    }`;
+
   return (
-    <nav className="bg-gray-900 text-white shadow-lg">
-      <div className="max-w-6xl mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
+    <nav className="sticky top-0 z-40 bg-white border-b-2 border-brand-500">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="flex items-center h-[64px] gap-10">
+
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 font-bold text-xl">
-            <span>⚽</span>
-            <span className="text-brand-400">Football 5v5</span>
+          <Link to="/" className="flex items-center flex-shrink-0">
+            <img
+              src="/logo5V5.png"
+              alt="Five V Five"
+              className="h-14 w-auto object-contain"
+            />
           </Link>
 
-          {/* Liens publics */}
-          <div className="hidden md:flex items-center gap-6">
-            <Link
-              to="/"
-              className={`text-sm font-medium transition-colors ${
-                isActive('/') ? 'text-brand-400' : 'text-gray-300 hover:text-white'
-              }`}
-            >
-              Accueil
-            </Link>
-            <Link
-              to="/terrains"
-              className={`text-sm font-medium transition-colors ${
-                isActive('/terrains') ? 'text-brand-400' : 'text-gray-300 hover:text-white'
-              }`}
-            >
-              Nos terrains
-            </Link>
-
-            {/* Liens connectés */}
+          {/* Liens desktop */}
+          <div className="hidden md:flex items-center gap-8 flex-1">
+            <Link to="/terrains" className={navLinkClass('/terrains')}>Nos terrains</Link>
             {isAuthenticated && (
-              <Link
-                to="/mon-espace"
-                className={`text-sm font-medium transition-colors ${
-                  isActive('/mon-espace') ? 'text-brand-400' : 'text-gray-300 hover:text-white'
-                }`}
-              >
-                Mon espace
-              </Link>
+              <Link to="/mon-espace" className={navLinkClass('/mon-espace')}>Mon espace</Link>
             )}
           </div>
 
-          {/* Auth */}
-          <div className="hidden md:flex items-center gap-3">
+          {/* Auth desktop — séparés par un trait vertical */}
+          <div className="hidden md:flex items-stretch h-full ml-auto">
+            {/* CTA Réserver */}
+            <Link
+              to={isAuthenticated ? '/reserver' : '/connexion'}
+              className="flex items-center px-6 border-l border-gray-200 text-[13px] font-extrabold uppercase tracking-wider text-white bg-brand-500 hover:bg-brand-600 transition-colors"
+            >
+              Je réserve
+            </Link>
+
             {isAuthenticated && user ? (
               <>
                 <Link
                   to="/profil"
-                  className="text-sm text-gray-300 hover:text-brand-400 transition-colors"
+                  className="flex items-center px-6 border-l border-gray-200 text-[13px] font-extrabold uppercase tracking-wider text-gray-900 hover:text-brand-500 hover:bg-gray-50 transition-colors"
                 >
                   {user.username}
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="text-sm bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
+                  className="flex items-center px-6 border-l border-gray-200 text-[13px] font-extrabold uppercase tracking-wider text-gray-900 hover:text-brand-500 hover:bg-gray-50 transition-colors"
                 >
-                  Se déconnecter
+                  Déconnexion
                 </button>
               </>
             ) : (
-              <Link
-                to="/connexion"
-                className="text-sm bg-brand-500 hover:bg-brand-600 text-white px-4 py-2 rounded-lg transition-colors font-medium"
-              >
-                Connexion
-              </Link>
+              <>
+                <Link
+                  to="/connexion"
+                  className="flex items-center px-6 border-l border-gray-200 text-[13px] font-extrabold uppercase tracking-wider text-gray-900 hover:text-brand-500 hover:bg-gray-50 transition-colors"
+                >
+                  Login
+                </Link>
+                <Link
+                  to="/connexion?tab=register"
+                  className="flex items-center px-6 border-l border-gray-200 text-[13px] font-extrabold uppercase tracking-wider text-gray-900 hover:text-brand-500 hover:bg-gray-50 transition-colors"
+                >
+                  Inscription
+                </Link>
+              </>
             )}
           </div>
 
           {/* Burger mobile */}
           <button
-            className="md:hidden p-2 rounded-lg hover:bg-gray-700"
+            className="md:hidden ml-auto p-2 rounded-lg hover:bg-gray-100 transition-colors"
             onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="Menu"
           >
-            <div className="w-5 h-0.5 bg-white mb-1"></div>
-            <div className="w-5 h-0.5 bg-white mb-1"></div>
-            <div className="w-5 h-0.5 bg-white"></div>
+            <div className={`w-5 h-0.5 bg-gray-900 transition-all mb-1.5 ${menuOpen ? 'rotate-45 translate-y-2' : ''}`} />
+            <div className={`w-5 h-0.5 bg-gray-900 transition-all ${menuOpen ? 'opacity-0' : ''}`} />
+            <div className={`w-5 h-0.5 bg-gray-900 transition-all mt-1.5 ${menuOpen ? '-rotate-45 -translate-y-2' : ''}`} />
           </button>
         </div>
 
         {/* Menu mobile */}
         {menuOpen && (
-          <div className="md:hidden py-3 border-t border-gray-700 space-y-2">
-            <Link to="/" className="block py-2 text-sm text-gray-300 hover:text-white" onClick={() => setMenuOpen(false)}>Accueil</Link>
-            <Link to="/terrains" className="block py-2 text-sm text-gray-300 hover:text-white" onClick={() => setMenuOpen(false)}>Nos terrains</Link>
-            {isAuthenticated && <Link to="/mon-espace" className="block py-2 text-sm text-gray-300 hover:text-white" onClick={() => setMenuOpen(false)}>Mon espace</Link>}
-            {isAuthenticated
-              ? <button onClick={handleLogout} className="block py-2 text-sm text-red-400">Se déconnecter</button>
-              : <Link to="/connexion" className="block py-2 text-sm text-brand-400" onClick={() => setMenuOpen(false)}>Connexion</Link>
-            }
+          <div className="md:hidden py-4 border-t border-gray-100 space-y-1">
+            {[
+              { to: '/', label: 'Accueil' },
+              { to: '/terrains', label: 'Nos terrains' },
+              ...(isAuthenticated ? [{ to: '/mon-espace', label: 'Mon espace' }] : []),
+              ...(isAuthenticated ? [{ to: '/profil', label: 'Mon profil' }] : []),
+            ].map(({ to, label }) => (
+              <Link
+                key={to}
+                to={to}
+                onClick={() => setMenuOpen(false)}
+                className={`block px-4 py-2.5 rounded-xl text-sm font-extrabold uppercase tracking-wider transition-colors ${
+                  isActive(to)
+                    ? 'bg-brand-50 text-brand-500'
+                    : 'text-gray-900 hover:bg-gray-50 hover:text-brand-500'
+                }`}
+              >
+                {label}
+              </Link>
+            ))}
+            <div className="pt-3 border-t border-gray-100 mt-2 space-y-2">
+              {isAuthenticated ? (
+                <button
+                  onClick={handleLogout}
+                  className="block w-full text-left px-4 py-2.5 rounded-xl text-sm font-extrabold uppercase tracking-wider text-red-500 hover:bg-red-50 transition-colors"
+                >
+                  Déconnexion
+                </button>
+              ) : (
+                <>
+                  <Link
+                    to="/connexion"
+                    onClick={() => setMenuOpen(false)}
+                    className="block px-4 py-2.5 rounded-xl text-sm font-extrabold uppercase tracking-wider text-gray-900 hover:bg-gray-50 transition-colors"
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    to="/connexion?tab=register"
+                    onClick={() => setMenuOpen(false)}
+                    className="block px-4 py-3 rounded-xl text-sm font-extrabold uppercase tracking-wider text-white bg-brand-500 hover:bg-brand-600 text-center transition-colors"
+                  >
+                    Inscription
+                  </Link>
+                </>
+              )}
+            </div>
           </div>
         )}
       </div>
