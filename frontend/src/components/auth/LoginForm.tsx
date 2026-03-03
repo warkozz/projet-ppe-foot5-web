@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import Input from '../ui/Input';
+import Button from '../ui/Button';
+import Alert from '../ui/Alert';
 
 interface LoginFormProps {
   onSuccess?: () => void;
@@ -47,64 +50,42 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegister }) 
     }
   };
 
-  const inputClass = (hasError: boolean) =>
-    `w-full px-4 py-3 rounded-lg border bg-gray-50 text-gray-900 placeholder-gray-400
-     focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition
-     ${hasError ? 'border-red-400 bg-red-50' : 'border-gray-200'}`;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       {errors.general && (
-        <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-2">
-          <span>⚠️</span> {errors.general}
-        </div>
+        <Alert variant="error">{errors.general}</Alert>
       )}
 
-      <div>
-        <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1.5">
-          Nom d'utilisateur
-        </label>
-        <input
-          type="text"
-          id="username"
-          name="username"
-          value={formData.username}
-          onChange={handleChange}
-          className={inputClass(!!errors.username)}
-          placeholder="votre_pseudo"
-          autoComplete="username"
-          disabled={isLoading}
-        />
-        {errors.username && <p className="text-red-500 text-xs mt-1">{errors.username}</p>}
-      </div>
-
-      <div>
-        <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
-          Mot de passe
-        </label>
-        <input
-          type="password"
-          id="password"
-          name="password"
-          value={formData.password}
-          onChange={handleChange}
-          className={inputClass(!!errors.password)}
-          placeholder="••••••••"
-          autoComplete="current-password"
-          disabled={isLoading}
-        />
-        {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
-      </div>
-
-      <button
-        type="submit"
+      <Input
+        label="Nom d'utilisateur"
+        id="username"
+        name="username"
+        type="text"
+        value={formData.username}
+        onChange={handleChange}
+        error={errors.username}
+        placeholder="votre_pseudo"
+        autoComplete="username"
         disabled={isLoading}
-        className="w-full py-3 px-4 rounded-lg font-semibold text-white bg-brand-500 hover:bg-brand-600
-                   focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2
-                   disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-      >
-        {isLoading ? 'Connexion...' : 'Se connecter'}
-      </button>
+      />
+
+      <Input
+        label="Mot de passe"
+        id="password"
+        name="password"
+        type="password"
+        value={formData.password}
+        onChange={handleChange}
+        error={errors.password}
+        placeholder="••••••••"
+        autoComplete="current-password"
+        disabled={isLoading}
+      />
+
+      <Button type="submit" variant="primary" size="lg" loading={isLoading} className="w-full mt-1">
+        {isLoading ? 'Connexion…' : 'Se connecter'}
+      </Button>
 
       {onSwitchToRegister && (
         <p className="text-center text-sm text-gray-500">

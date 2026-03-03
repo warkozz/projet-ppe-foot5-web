@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { authAPI } from '../../services/api';
 import { AxiosError } from 'axios';
+import Input from '../ui/Input';
+import Button from '../ui/Button';
+import Alert from '../ui/Alert';
 
 interface RegisterFormProps {
   onSuccess?: () => void;
@@ -110,102 +113,69 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchToLogin 
     }
   };
 
-  const inputClass = (hasError: boolean) =>
-    `w-full px-4 py-3 rounded-lg border bg-gray-50 text-gray-900 placeholder-gray-400
-     focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition
-     ${hasError ? 'border-red-400 bg-red-50' : 'border-gray-200'}`;
-
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {errors.general && (
-        <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-2">
-          <span>⚠️</span> {errors.general}
-        </div>
+        <Alert variant="error">{errors.general}</Alert>
       )}
 
-      <div>
-        <label htmlFor="r-username" className="block text-sm font-medium text-gray-700 mb-1.5">
-          Nom d'utilisateur
-        </label>
-        <input
-          type="text"
-          id="r-username"
-          name="username"
-          value={formData.username}
-          onChange={handleChange}
-          className={inputClass(!!errors.username)}
-          placeholder="votre_pseudo"
-          autoComplete="username"
-          disabled={isLoading}
-        />
-        {errors.username && <p className="text-red-500 text-xs mt-1">{errors.username}</p>}
-      </div>
-
-      <div>
-        <label htmlFor="r-email" className="block text-sm font-medium text-gray-700 mb-1.5">
-          Email
-        </label>
-        <input
-          type="email"
-          id="r-email"
-          name="email"
-          value={formData.email}
-          onChange={handleChange}
-          className={inputClass(!!errors.email)}
-          placeholder="votre@email.com"
-          autoComplete="email"
-          disabled={isLoading}
-        />
-        {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
-      </div>
-
-      <div>
-        <label htmlFor="r-password" className="block text-sm font-medium text-gray-700 mb-1.5">
-          Mot de passe
-        </label>
-        <input
-          type="password"
-          id="r-password"
-          name="password"
-          value={formData.password}
-          onChange={handleChange}
-          className={inputClass(!!errors.password)}
-          placeholder="••••••••"
-          autoComplete="new-password"
-          disabled={isLoading}
-        />
-        {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
-      </div>
-
-      <div>
-        <label htmlFor="r-confirmPassword" className="block text-sm font-medium text-gray-700 mb-1.5">
-          Confirmer le mot de passe
-        </label>
-        <input
-          type="password"
-          id="r-confirmPassword"
-          name="confirmPassword"
-          value={formData.confirmPassword}
-          onChange={handleChange}
-          className={inputClass(!!errors.confirmPassword)}
-          placeholder="••••••••"
-          autoComplete="new-password"
-          disabled={isLoading}
-        />
-        {errors.confirmPassword && (
-          <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>
-        )}
-      </div>
-
-      <button
-        type="submit"
+      <Input
+        label="Nom d'utilisateur"
+        id="r-username"
+        name="username"
+        type="text"
+        value={formData.username}
+        onChange={handleChange}
+        error={errors.username}
+        placeholder="votre_pseudo"
+        autoComplete="username"
         disabled={isLoading}
-        className="w-full py-3 px-4 rounded-lg font-semibold text-white bg-brand-500 hover:bg-brand-600
-                   focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2
-                   disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-      >
-        {isLoading ? 'Création...' : 'Créer mon compte'}
-      </button>
+        hint="Lettres, chiffres et _ uniquement (min. 3 caractères)"
+      />
+
+      <Input
+        label="Email"
+        id="r-email"
+        name="email"
+        type="email"
+        value={formData.email}
+        onChange={handleChange}
+        error={errors.email}
+        placeholder="votre@email.com"
+        autoComplete="email"
+        disabled={isLoading}
+      />
+
+      <Input
+        label="Mot de passe"
+        id="r-password"
+        name="password"
+        type="password"
+        value={formData.password}
+        onChange={handleChange}
+        error={errors.password}
+        placeholder="••••••••"
+        autoComplete="new-password"
+        disabled={isLoading}
+        hint="Minimum 6 caractères"
+      />
+
+      <Input
+        label="Confirmer le mot de passe"
+        id="r-confirmPassword"
+        name="confirmPassword"
+        type="password"
+        value={formData.confirmPassword}
+        onChange={handleChange}
+        error={errors.confirmPassword}
+        placeholder="••••••••"
+        autoComplete="new-password"
+        disabled={isLoading}
+      />
+
+      <Button type="submit" variant="primary" size="lg" loading={isLoading} className="w-full mt-1">
+        {isLoading ? 'Création…' : 'Créer mon compte'}
+      </Button>
 
       {onSwitchToLogin && (
         <p className="text-center text-sm text-gray-500">
