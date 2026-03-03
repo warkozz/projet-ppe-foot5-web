@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { terrainsAPI } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 interface Terrain {
   id: number;
@@ -13,13 +14,24 @@ const TerrainsPage: React.FC = () => {
   const [terrains, setTerrains] = useState<Terrain[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     terrainsAPI.getAll()
-      .then(res => setTerrains(res.data))
+      .then((res: { data: Terrain[] }) => setTerrains(res.data))
       .catch(() => setError('Impossible de charger les terrains.'))
       .finally(() => setLoading(false));
   }, []);
+
+  const handleReserver = (terrain: Terrain) => {
+    const dest = `/reserver?terrain=${terrain.id}`;
+    if (isAuthenticated) {
+      navigate(dest);
+    } else {
+      navigate('/connexion', { state: { from: { pathname: dest } } });
+    }
+  };
 
   return (
     <main className="min-h-screen bg-gray-50 py-12 px-4">
@@ -59,12 +71,12 @@ const TerrainsPage: React.FC = () => {
                     {terrain.active ? 'Disponible' : 'Indisponible'}
                   </span>
                   <div className="pt-2 border-t border-gray-100">
-                    <Link
-                      to="/connexion"
-                      className="block text-center bg-brand-500 hover:bg-brand-600 text-white font-medium py-2 rounded-lg transition-colors text-sm"
+                    <button
+                      onClick={() => handleReserver(terrain)}
+                      className="block w-full text-center bg-brand-500 hover:bg-brand-600 text-white font-medium py-2 rounded-lg transition-colors text-sm"
                     >
                       Réserver ce terrain
-                    </Link>
+                    </button>
                   </div>
                 </div>
               </div>

@@ -6,16 +6,14 @@ export interface User {
   id: number;
   username: string;
   email: string;
-  full_name: string;
-  is_active: boolean;
-  created_at: string;
+  role: string;
+  active: boolean;
 }
 
 export interface UserRegistration {
   username: string;
   email: string;
   password: string;
-  full_name: string;
 }
 
 // ========================================
@@ -54,12 +52,11 @@ export interface Reservation {
   id: number;
   terrain_id: number;
   user_id: number;
-  date_debut: string; // ISO format: "2026-01-15T10:00:00"
-  date_fin: string;   // ISO format: "2026-01-15T11:00:00"
-  prix_total: number;
-  status: ReservationStatus;
-  created_at: string;
-  
+  start: string;  // ISO format: "2026-01-15T10:00:00"
+  end: string;    // ISO format: "2026-01-15T11:00:00"
+  notes?: string;
+  status: string;
+
   // Relations (optionnelles selon les endpoints)
   terrain?: Terrain;
   user?: User;
@@ -67,8 +64,9 @@ export interface Reservation {
 
 export interface ReservationCreate {
   terrain_id: number;
-  date_debut: string; // ISO format
-  date_fin: string;   // ISO format
+  start: string; // ISO format
+  end: string;   // ISO format
+  notes?: string;
 }
 
 export interface ReservationUpdate {

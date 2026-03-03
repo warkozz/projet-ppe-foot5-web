@@ -1,7 +1,15 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 const HomePage: React.FC = () => {
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  const handleReserver = () => {
+    navigate(isAuthenticated ? '/reserver' : '/connexion');
+  };
+
   return (
     <main>
       {/* Hero */}
@@ -14,12 +22,12 @@ const HomePage: React.FC = () => {
             Des terrains de qualité disponibles 7j/7, de 8h à 20h. Réservez en ligne en quelques clics.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              to="/connexion"
+            <button
+              onClick={handleReserver}
               className="bg-brand-500 hover:bg-brand-600 text-white font-semibold py-3 px-8 rounded-lg transition-colors text-lg"
             >
               Réserver un terrain
-            </Link>
+            </button>
             <Link
               to="/terrains"
               className="border border-white text-white hover:bg-white hover:text-gray-900 font-semibold py-3 px-8 rounded-lg transition-colors text-lg"
@@ -64,12 +72,12 @@ const HomePage: React.FC = () => {
       <section className="bg-brand-600 text-white py-16 px-4 text-center">
         <h2 className="text-3xl font-bold mb-4">Prêt à jouer ?</h2>
         <p className="text-brand-100 mb-8 text-lg">Créez votre compte gratuitement et réservez votre premier terrain.</p>
-        <Link
-          to="/connexion"
-          className="bg-white text-brand-700 hover:bg-brand-50 font-semibold py-3 px-10 rounded-lg transition-colors text-lg inline-block"
+        <button
+          onClick={handleReserver}
+          className="bg-white text-brand-700 hover:bg-brand-50 font-semibold py-3 px-10 rounded-lg transition-colors text-lg"
         >
           Commencer
-        </Link>
+        </button>
       </section>
     </main>
   );

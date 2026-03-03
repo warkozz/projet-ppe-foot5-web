@@ -7,6 +7,7 @@ import HomePage from './pages/HomePage';
 import TerrainsPage from './pages/TerrainsPage';
 import LoginPage from './pages/LoginPage';
 import MonEspacePage from './pages/MonEspacePage';
+import ReservationPage from './pages/ReservationPage';
 import './App.css';
 
 function App() {
@@ -24,6 +25,9 @@ function App() {
             {/* Pages protégées (login requis) */}
             <Route path="/mon-espace" element={
               <ProtectedRoute><MonEspacePage /></ProtectedRoute>
+            } />
+            <Route path="/reserver" element={
+              <ProtectedRoute><ReservationPage /></ProtectedRoute>
             } />
 
             {/* Fallback */}
