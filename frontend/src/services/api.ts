@@ -88,6 +88,12 @@ export const authAPI = {
     
   getProfile: (): Promise<AxiosResponse<any>> =>
     apiClient.get('/auth/me'),
+
+  updateProfile: (data: { username?: string; email?: string }): Promise<AxiosResponse<any>> =>
+    apiClient.put('/auth/me', data),
+
+  updatePassword: (data: { current_password: string; new_password: string }): Promise<AxiosResponse<any>> =>
+    apiClient.put('/auth/me/password', data),
 };
 
 export const terrainsAPI = {
@@ -116,4 +122,7 @@ export const reservationAPI = {
     
   cancel: (id: number): Promise<AxiosResponse<any>> =>
     apiClient.delete(`/reservations/${id}`),
+
+  update: (id: number, data: { start?: string; end?: string; notes?: string }): Promise<AxiosResponse<any>> =>
+    apiClient.put(`/reservations/${id}`, data),
 };

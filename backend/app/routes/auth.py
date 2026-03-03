@@ -5,7 +5,7 @@ from datetime import timedelta
 from app.models.database import get_db
 from app.models.user import User
 from app.schemas.auth import LoginResponse, Token
-from app.schemas.user import UserCreate, UserResponse
+from app.schemas.user import UserCreate, UserResponse, UserUpdate, PasswordChange
 from app.utils.hashing import hash_password, verify_password
 from app.utils.jwt import create_access_token, verify_token, ACCESS_TOKEN_EXPIRE_MINUTES
 
@@ -118,6 +118,58 @@ def read_users_me(current_user: User = Depends(get_current_user)):
     Obtenir les informations de l'utilisateur connecté
     """
     return current_user
+
+
+@router.put("/me", response_model=UserResponse)
+def update_profile(
+    update_data: UserUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Modifier le profil de l'utilisateur connecté (username / email)
+    """
+    if update_data.username and update_data.username != current_user.username:
+        existing = db.query(User).filter(User.username == update_data.username).first()
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Ce nom d'utilisateur est déjà utilisé"
+            )
+        current_user.username = update_data.username
+
+    if update_data.email and update_data.email != current_user.email:
+        existing = db.query(User).filter(User.email == update_data.email).first()
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cette adresse e-mail est déjà utilisée"
+            )
+        current_user.email = update_data.email
+
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+
+@router.put("/me/password")
+def change_password(
+    passwd_data: PasswordChange,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Modifier le mot de passe de l'utilisateur connecté
+    """
+    if not verify_password(passwd_data.current_password, current_user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Mot de passe actuel incorrect"
+        )
+
+    current_user.password_hash = hash_password(passwd_data.new_password)
+    db.commit()
+    return {"message": "Mot de passe modifié avec succès"}
 
 
 @router.post("/refresh", response_model=Token)

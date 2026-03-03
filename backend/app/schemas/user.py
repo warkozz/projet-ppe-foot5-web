@@ -24,6 +24,11 @@ class UserUpdate(BaseModel):
     active: Optional[bool] = None
 
 
+class PasswordChange(BaseModel):
+    current_password: str = Field(..., min_length=1)
+    new_password: str = Field(..., min_length=6)
+
+
 class UserResponse(UserBase):
     id: int
     role: str  # lecture seule - non settable par le client
