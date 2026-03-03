@@ -61,7 +61,12 @@ const Navigation: React.FC = () => {
           <div className="hidden md:flex items-center gap-3">
             {isAuthenticated && user ? (
               <>
-                <span className="text-sm text-gray-400">{user.username}</span>
+                <Link
+                  to="/profil"
+                  className="text-sm text-gray-300 hover:text-brand-400 transition-colors"
+                >
+                  {user.username}
+                </Link>
                 <button
                   onClick={handleLogout}
                   className="text-sm bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"

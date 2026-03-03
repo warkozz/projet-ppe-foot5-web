@@ -8,6 +8,7 @@ import TerrainsPage from './pages/TerrainsPage';
 import LoginPage from './pages/LoginPage';
 import MonEspacePage from './pages/MonEspacePage';
 import ReservationPage from './pages/ReservationPage';
+import ProfilPage from './pages/ProfilPage';
 import './App.css';
 
 function App() {
@@ -28,6 +29,9 @@ function App() {
             } />
             <Route path="/reserver" element={
               <ProtectedRoute><ReservationPage /></ProtectedRoute>
+            } />
+            <Route path="/profil" element={
+              <ProtectedRoute><ProfilPage /></ProtectedRoute>
             } />
 
             {/* Fallback */}
