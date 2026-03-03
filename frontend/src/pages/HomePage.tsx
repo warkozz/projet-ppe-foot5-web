@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -18,6 +18,66 @@ const Stat: React.FC<{ value: string; label: string }> = ({ value, label }) => (
     <p className="text-sm text-gray-500 font-medium">{label}</p>
   </div>
 );
+
+const faqs = [
+  {
+    q: 'Comment réserver un terrain ?',
+    a: "Créez un compte gratuitement, choisissez votre terrain et votre créneau depuis la page Terrains, puis confirmez votre réservation en quelques clics.",
+  },
+  {
+    q: 'Quel est le délai d\'annulation ?',
+    a: "Vous pouvez annuler une réservation jusqu'à 24h avant le créneau directement depuis votre espace client, sans frais.",
+  },
+  {
+    q: 'Y a-t-il un accès parking ?',
+    a: "Oui, un parking gratuit est disponible sur place pour tous nos clients pendant la durée de leur réservation.",
+  },
+  {
+    q: 'Les équipements sont-ils fournis ?',
+    a: "Le ballon est inclus dans chaque réservation. Vestiaires, éclairage LED et accès buvette sont également compris.",
+  },
+  {
+    q: 'Puis-je modifier une réservation existante ?',
+    a: "Oui, depuis votre espace client (Mon Espace), vous pouvez modifier la date ou l'heure de votre réservation sous réserve de disponibilité.",
+  },
+];
+
+const FaqSection: React.FC = () => {
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+
+  return (
+    <section className="py-24 px-4 bg-gray-50/70">
+      <div className="max-w-3xl mx-auto">
+        <div className="text-center mb-14">
+          <p className="text-sm font-semibold text-brand-600 uppercase tracking-widest mb-3">FAQ</p>
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900">Questions fréquentes</h2>
+        </div>
+        <div className="space-y-3">
+          {faqs.map((faq, i) => (
+            <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <button
+                onClick={() => setOpenIndex(openIndex === i ? null : i)}
+                className="w-full flex items-center justify-between gap-4 px-6 py-5 text-left hover:bg-gray-50/80 transition-colors"
+              >
+                <span className="font-semibold text-gray-900 text-[15px]">{faq.q}</span>
+                <span className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-colors ${openIndex === i ? 'bg-brand-500 text-white' : 'bg-gray-100 text-gray-400'}`}>
+                  <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${openIndex === i ? 'rotate-45' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 5v14M5 12h14" />
+                  </svg>
+                </span>
+              </button>
+              {openIndex === i && (
+                <div className="px-6 pb-5 text-sm text-gray-500 leading-relaxed border-t border-gray-50 pt-4">
+                  {faq.a}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
 
 const HomePage: React.FC = () => {
   const { isAuthenticated } = useAuth();
@@ -144,6 +204,137 @@ const HomePage: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* ── Infos pratiques ── */}
+      <section className="py-24 px-4 bg-gray-50/70">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-14">
+            <p className="text-sm font-semibold text-brand-600 uppercase tracking-widest mb-3">Infos pratiques</p>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900">Tout ce qu'il faut savoir</h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+            {/* Horaires */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-7">
+              <div className="w-11 h-11 bg-brand-50 rounded-xl flex items-center justify-center mb-5">
+                <svg className="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-[15px] font-bold text-gray-900 mb-4">Horaires d'ouverture</h3>
+              <ul className="space-y-2 text-sm">
+                {[
+                  { day: 'Lundi – Vendredi', hours: '8h00 – 22h00' },
+                  { day: 'Samedi',           hours: '8h00 – 22h00' },
+                  { day: 'Dimanche',         hours: '9h00 – 20h00' },
+                ].map(({ day, hours }) => (
+                  <li key={day} className="flex justify-between items-center py-1.5 border-b border-gray-50 last:border-0">
+                    <span className="text-gray-500">{day}</span>
+                    <span className="font-semibold text-gray-800">{hours}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Adresse & Téléphone */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-7">
+              <div className="w-11 h-11 bg-brand-50 rounded-xl flex items-center justify-center mb-5">
+                <svg className="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+              <h3 className="text-[15px] font-bold text-gray-900 mb-4">Adresse & Contact</h3>
+              <div className="space-y-4 text-sm">
+                <div className="flex items-start gap-3">
+                  <div className="w-7 h-7 bg-gray-50 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-800">Foot 5 Centre</p>
+                    <p className="text-gray-500 leading-relaxed">12 Rue du Stade<br />75001 Paris, France</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-7 h-7 bg-gray-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                  </div>
+                  <a href="tel:+33100000000" className="font-semibold text-brand-600 hover:text-brand-700 transition-colors">
+                    01 00 00 00 00
+                  </a>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-7 h-7 bg-gray-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <a href="mailto:contact@foot5.fr" className="text-gray-500 hover:text-brand-600 transition-colors">
+                    contact@foot5.fr
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* CTA Réserver */}
+            <div className="bg-gradient-to-br from-brand-500 to-brand-700 rounded-2xl p-7 flex flex-col justify-between relative overflow-hidden">
+              <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/10 rounded-full" />
+              <div className="absolute bottom-4 left-4 w-16 h-16 bg-white/5 rounded-full" />
+              <div className="relative">
+                <div className="w-11 h-11 bg-white/20 rounded-xl flex items-center justify-center mb-5">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <h3 className="text-[15px] font-bold text-white mb-2">Réservez maintenant</h3>
+                <p className="text-brand-100 text-sm leading-relaxed mb-6">
+                  Choisissez votre terrain et votre créneau en moins de 2 minutes.
+                </p>
+              </div>
+              <button
+                onClick={handleReserver}
+                className="relative w-full bg-white text-brand-700 hover:bg-brand-50 font-bold py-3 px-5 rounded-xl transition-all text-sm shadow-lg"
+              >
+                Voir les disponibilités →
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* ── Services inclus ── */}
+      <section className="py-24 px-4 bg-white">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-14">
+            <p className="text-sm font-semibold text-brand-600 uppercase tracking-widest mb-3">Services</p>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900">Tout est inclus dans votre réservation</h2>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+            {[
+              { icon: '⚽', label: 'Ballon fourni' },
+              { icon: '🚿', label: 'Vestiaires' },
+              { icon: '💡', label: 'Éclairage LED' },
+              { icon: '🅿️', label: 'Parking gratuit' },
+              { icon: '🥤', label: 'Buvette' },
+              { icon: '📹', label: 'Vidéo à la demande' },
+            ].map(({ icon, label }) => (
+              <div key={label} className="flex flex-col items-center gap-3 p-5 bg-gray-50 rounded-2xl hover:bg-brand-50 transition-colors group">
+                <span className="text-3xl">{icon}</span>
+                <span className="text-xs font-semibold text-gray-600 group-hover:text-brand-700 text-center leading-tight">{label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── FAQ ── */}
+      <FaqSection />
 
       {/* ── CTA Final ── */}
       <section className="py-20 px-4 bg-gradient-to-r from-brand-600 to-brand-500">

@@ -17,6 +17,12 @@ const LoginPage: React.FC = () => {
 
   const from = (location.state as any)?.from?.pathname || '/mon-espace';
 
+  // Ouvrir directement l'onglet inscription si ?tab=register
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('tab') === 'register') setAuthMode('register');
+  }, [location.search]);
+
   useEffect(() => {
     if (localStorage.getItem('session_expired')) {
       setSessionExpired(true);

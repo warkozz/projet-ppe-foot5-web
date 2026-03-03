@@ -17,79 +17,84 @@ const Navigation: React.FC = () => {
   const isActive = (path: string) => location.pathname === path;
 
   const navLinkClass = (path: string) =>
-    `relative text-sm font-medium transition-colors pb-0.5 ${
-      isActive(path)
-        ? 'text-brand-600 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-brand-500 after:rounded-full'
-        : 'text-gray-500 hover:text-gray-900'
+    `text-[13px] font-extrabold uppercase tracking-wider transition-colors ${
+      isActive(path) ? 'text-brand-500' : 'text-gray-900 hover:text-brand-500'
     }`;
 
-  const initials = user?.username
-    ? user.username.slice(0, 2).toUpperCase()
-    : '??';
-
   return (
-    <nav className="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-sm">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <div className="flex items-center justify-between h-16">
+    <nav className="sticky top-0 z-40 bg-white border-b-2 border-brand-500">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="flex items-center h-[64px] gap-10">
 
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2.5 flex-shrink-0">
-            <div className="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center shadow-sm">
-              <span className="text-white text-base leading-none">⚽</span>
-            </div>
-            <span className="font-bold text-gray-900 text-[15px] tracking-tight hidden sm:block">
-              Football <span className="text-brand-500">5v5</span>
-            </span>
+          <Link to="/" className="flex items-center flex-shrink-0">
+            <img
+              src="/logo5V5.png"
+              alt="Five V Five"
+              className="h-14 w-auto object-contain"
+            />
           </Link>
 
           {/* Liens desktop */}
-          <div className="hidden md:flex items-center gap-7">
-            <Link to="/" className={navLinkClass('/')}>Accueil</Link>
+          <div className="hidden md:flex items-center gap-8 flex-1">
             <Link to="/terrains" className={navLinkClass('/terrains')}>Nos terrains</Link>
             {isAuthenticated && (
               <Link to="/mon-espace" className={navLinkClass('/mon-espace')}>Mon espace</Link>
             )}
           </div>
 
-          {/* Auth desktop */}
-          <div className="hidden md:flex items-center gap-3">
+          {/* Auth desktop — séparés par un trait vertical */}
+          <div className="hidden md:flex items-stretch h-full ml-auto">
+            {/* CTA Réserver */}
+            <Link
+              to={isAuthenticated ? '/reserver' : '/connexion'}
+              className="flex items-center px-6 border-l border-gray-200 text-[13px] font-extrabold uppercase tracking-wider text-white bg-brand-500 hover:bg-brand-600 transition-colors"
+            >
+              Je réserve
+            </Link>
+
             {isAuthenticated && user ? (
               <>
                 <Link
                   to="/profil"
-                  className="flex items-center gap-2 text-sm text-gray-600 hover:text-brand-600 transition-colors group"
+                  className="flex items-center px-6 border-l border-gray-200 text-[13px] font-extrabold uppercase tracking-wider text-gray-900 hover:text-brand-500 hover:bg-gray-50 transition-colors"
                 >
-                  <div className="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 text-xs font-bold group-hover:bg-brand-200 transition-colors">
-                    {initials}
-                  </div>
-                  <span className="font-medium">{user.username}</span>
+                  {user.username}
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="text-sm text-gray-500 hover:text-red-500 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors font-medium"
+                  className="flex items-center px-6 border-l border-gray-200 text-[13px] font-extrabold uppercase tracking-wider text-gray-900 hover:text-brand-500 hover:bg-gray-50 transition-colors"
                 >
                   Déconnexion
                 </button>
               </>
             ) : (
-              <Link
-                to="/connexion"
-                className="text-sm bg-brand-500 hover:bg-brand-600 text-white px-5 py-2 rounded-xl transition-colors font-semibold shadow-sm"
-              >
-                Connexion
-              </Link>
+              <>
+                <Link
+                  to="/connexion"
+                  className="flex items-center px-6 border-l border-gray-200 text-[13px] font-extrabold uppercase tracking-wider text-gray-900 hover:text-brand-500 hover:bg-gray-50 transition-colors"
+                >
+                  Login
+                </Link>
+                <Link
+                  to="/connexion?tab=register"
+                  className="flex items-center px-6 border-l border-gray-200 text-[13px] font-extrabold uppercase tracking-wider text-gray-900 hover:text-brand-500 hover:bg-gray-50 transition-colors"
+                >
+                  Inscription
+                </Link>
+              </>
             )}
           </div>
 
           {/* Burger mobile */}
           <button
-            className="md:hidden p-2 rounded-xl hover:bg-gray-100 transition-colors"
+            className="md:hidden ml-auto p-2 rounded-lg hover:bg-gray-100 transition-colors"
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label="Menu"
           >
-            <div className={`w-5 h-0.5 bg-gray-700 transition-all mb-1.5 ${menuOpen ? 'rotate-45 translate-y-2' : ''}`} />
-            <div className={`w-5 h-0.5 bg-gray-700 transition-all ${menuOpen ? 'opacity-0' : ''}`} />
-            <div className={`w-5 h-0.5 bg-gray-700 transition-all mt-1.5 ${menuOpen ? '-rotate-45 -translate-y-2' : ''}`} />
+            <div className={`w-5 h-0.5 bg-gray-900 transition-all mb-1.5 ${menuOpen ? 'rotate-45 translate-y-2' : ''}`} />
+            <div className={`w-5 h-0.5 bg-gray-900 transition-all ${menuOpen ? 'opacity-0' : ''}`} />
+            <div className={`w-5 h-0.5 bg-gray-900 transition-all mt-1.5 ${menuOpen ? '-rotate-45 -translate-y-2' : ''}`} />
           </button>
         </div>
 
@@ -106,31 +111,40 @@ const Navigation: React.FC = () => {
                 key={to}
                 to={to}
                 onClick={() => setMenuOpen(false)}
-                className={`block px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                className={`block px-4 py-2.5 rounded-xl text-sm font-extrabold uppercase tracking-wider transition-colors ${
                   isActive(to)
-                    ? 'bg-brand-50 text-brand-700'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    ? 'bg-brand-50 text-brand-500'
+                    : 'text-gray-900 hover:bg-gray-50 hover:text-brand-500'
                 }`}
               >
                 {label}
               </Link>
             ))}
-            <div className="pt-2 border-t border-gray-100 mt-2">
+            <div className="pt-3 border-t border-gray-100 mt-2 space-y-2">
               {isAuthenticated ? (
                 <button
                   onClick={handleLogout}
-                  className="block w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 transition-colors"
+                  className="block w-full text-left px-4 py-2.5 rounded-xl text-sm font-extrabold uppercase tracking-wider text-red-500 hover:bg-red-50 transition-colors"
                 >
-                  Se déconnecter
+                  Déconnexion
                 </button>
               ) : (
-                <Link
-                  to="/connexion"
-                  onClick={() => setMenuOpen(false)}
-                  className="block px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-brand-500 hover:bg-brand-600 text-center transition-colors"
-                >
-                  Connexion
-                </Link>
+                <>
+                  <Link
+                    to="/connexion"
+                    onClick={() => setMenuOpen(false)}
+                    className="block px-4 py-2.5 rounded-xl text-sm font-extrabold uppercase tracking-wider text-gray-900 hover:bg-gray-50 transition-colors"
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    to="/connexion?tab=register"
+                    onClick={() => setMenuOpen(false)}
+                    className="block px-4 py-3 rounded-xl text-sm font-extrabold uppercase tracking-wider text-white bg-brand-500 hover:bg-brand-600 text-center transition-colors"
+                  >
+                    Inscription
+                  </Link>
+                </>
               )}
             </div>
           </div>
