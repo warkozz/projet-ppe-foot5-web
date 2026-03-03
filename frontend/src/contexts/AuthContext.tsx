@@ -7,7 +7,7 @@ interface User {
   id: number;
   username: string;
   email: string;
-  full_name: string;
+  role: string;
 }
 
 interface AuthContextType {
@@ -93,8 +93,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (error instanceof AxiosError) {
         if (error.response?.status === 401) {
           errorMessage = 'Identifiants incorrects';
+        } else if (error.response?.status === 422) {
+          errorMessage = 'Données invalides. Vérifiez votre nom d\'utilisateur et mot de passe.';
         } else if (error.response?.data?.detail) {
-          errorMessage = error.response.data.detail;
+          // S'assurer que detail est une string
+          if (typeof error.response.data.detail === 'string') {
+            errorMessage = error.response.data.detail;
+          } else if (Array.isArray(error.response.data.detail)) {
+            // Gérer les erreurs de validation (format FastAPI)
+            errorMessage = error.response.data.detail.map((err: any) => err.msg || err.message || 'Erreur de validation').join(', ');
+          } else {
+            errorMessage = 'Erreur de validation';
+          }
         }
       }
       

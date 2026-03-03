@@ -30,15 +30,22 @@ def get_terrains(
     db: Session = Depends(get_db)
 ):
     """
-    Récupérer la liste des terrains
+    Récupérer la liste des terrains - route publique pour le moment
     """
-    query = db.query(Terrain)
-    
-    if active_only:
-        query = query.filter(Terrain.is_active == True)
-    
-    terrains = query.offset(skip).limit(limit).all()
-    return terrains
+    try:
+        query = db.query(Terrain)
+        
+        if active_only:
+            query = query.filter(Terrain.active == True)  # Corrigé: active au lieu de is_active
+        
+        terrains = query.offset(skip).limit(limit).all()
+        return terrains
+    except Exception as e:
+        print(f"❌ Erreur lors de la récupération des terrains: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erreur base de données: {str(e)}"
+        )
 
 
 @router.get("/{terrain_id}", response_model=TerrainResponse)

@@ -1,19 +1,43 @@
-from passlib.context import CryptContext
-from passlib.hash import bcrypt
+"""
+Password hashing utilities using bcrypt directly
+"""
 
-# Configuration pour le hashing des mots de passe
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
+import bcrypt
 
 def hash_password(password: str) -> str:
     """
-    Hasher un mot de passe avec bcrypt
+    Hash a password using bcrypt
     """
-    return pwd_context.hash(password)
-
+    # Convertir en bytes
+    password_bytes = password.encode('utf-8')
+    
+    # Tronquer à 72 bytes (limite de bcrypt)
+    if len(password_bytes) > 72:
+        password_bytes = password_bytes[:72]
+    
+    # Générer salt et hash
+    salt = bcrypt.gensalt(rounds=12)
+    hashed = bcrypt.hashpw(password_bytes, salt)
+    
+    # Retourner comme string
+    return hashed.decode('utf-8')
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """
-    Vérifier un mot de passe contre son hash
+    Verify a password against its hash
     """
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        # Convertir en bytes
+        password_bytes = plain_password.encode('utf-8')
+        
+        # Tronquer à 72 bytes (limite de bcrypt)
+        if len(password_bytes) > 72:
+            password_bytes = password_bytes[:72]
+        
+        hash_bytes = hashed_password.encode('utf-8')
+        
+        # Vérifier
+        return bcrypt.checkpw(password_bytes, hash_bytes)
+    except Exception as e:
+        print(f"Error verifying password: {e}")
+        return False
