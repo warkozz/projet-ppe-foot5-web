@@ -11,8 +11,7 @@
 - [**BACKEND_API.md**](BACKEND_API.md) - Documentation complète de l'API FastAPI
 - [**BACKEND_STATUS.md**](BACKEND_STATUS.md) - Status et fonctionnalités implémentées
 
-### 🎨 Documentation Frontend (À créer)
-- **FRONTEND_SETUP.md** - Guide de configuration React *(à venir)*
+### 🎨 Documentation Frontend
 - **COMPONENTS_GUIDE.md** - Guide des composants UI *(à venir)*
 - **API_INTEGRATION.md** - Guide d'intégration API *(à venir)*
 
@@ -47,11 +46,17 @@ docs/
 
 ## 🎯 État Actuel
 
-**Backend** : ✅ Complet et documenté  
-**Frontend** : ⏳ À développer et documenter  
-**Guides** : ⏳ À créer selon les besoins
+| Composant | Status |
+|---|---|
+| Backend FastAPI | ✅ Complet et documenté |
+| Frontend — socle (routing, auth, pages) | ✅ Complet |
+| Frontend — redesign UI (nav, footer, composants) | ✅ Complet |
+| Pages légales | ✅ Créées |
+| Tests backend | ✅ 35+ tests |
+| Tests frontend E2E | ⏳ À faire |
+| Déploiement | ⏳ À planifier |
 
 ---
 
-*Dernière mise à jour : 8 janvier 2026*  
-*Organisation par : Assistant IA*
+*Dernière mise à jour : 3 mars 2026*  
+*Branch active : `develop` (à jour) + `feature/ui-redesign` (terminée)*
