@@ -59,14 +59,24 @@ export interface LoginResponse {
     id: number;
     username: string;
     email: string;
-    full_name: string;
+    role: string;
   };
 }
 
 // Services API
 export const authAPI = {
-  login: (credentials: LoginRequest): Promise<AxiosResponse<LoginResponse>> =>
-    apiClient.post('/auth/login', credentials),
+  login: (credentials: LoginRequest): Promise<AxiosResponse<LoginResponse>> => {
+    // Convertir en form-data pour OAuth2PasswordRequestForm
+    const formData = new URLSearchParams();
+    formData.append('username', credentials.username);
+    formData.append('password', credentials.password);
+    
+    return apiClient.post('/auth/login', formData, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    });
+  },
     
   register: (userData: {
     username: string;

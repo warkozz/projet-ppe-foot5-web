@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy import Column, Integer, String, Boolean, Enum
 from sqlalchemy.orm import relationship
 from app.models.database import Base
 import enum
@@ -17,7 +17,7 @@ class User(Base):
     username = Column(String(50), unique=True, index=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
     email = Column(String(120), unique=True, index=True, nullable=False)
-    role = Column(String(20), default="user", nullable=False)  # Enum as string
+    role = Column(Enum('superadmin', 'admin', 'user', name='role_enum'), nullable=False, default='user')  # Même ENUM que desktop
     active = Column(Boolean, default=True, nullable=False)
 
     # Relations
