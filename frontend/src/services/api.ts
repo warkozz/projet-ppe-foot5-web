@@ -82,44 +82,37 @@ export const authAPI = {
     username: string;
     email: string;
     password: string;
-    full_name: string;
   }): Promise<AxiosResponse<any>> =>
     apiClient.post('/auth/register', userData),
     
   getProfile: (): Promise<AxiosResponse<any>> =>
-    apiClient.get('/auth/profile'),
+    apiClient.get('/auth/me'),
 };
 
-export const terrainAPI = {
+export const terrainsAPI = {
   getAll: (): Promise<AxiosResponse<any[]>> =>
     apiClient.get('/terrains'),
     
   getById: (id: number): Promise<AxiosResponse<any>> =>
     apiClient.get(`/terrains/${id}`),
+
+  getAvailability: (terrain_id: number, date: string): Promise<AxiosResponse<any>> =>
+    apiClient.get(`/terrains/availability/terrain/${terrain_id}?date=${date}`),
+
+  getSlots: (terrain_id: number, date: string): Promise<AxiosResponse<any>> =>
+    apiClient.get(`/reservations/availability/slots/${terrain_id}?date=${date}`),
 };
 
 export const reservationAPI = {
-  getAll: (): Promise<AxiosResponse<any[]>> =>
+  getMine: (): Promise<AxiosResponse<any[]>> =>
     apiClient.get('/reservations'),
     
   getById: (id: number): Promise<AxiosResponse<any>> =>
     apiClient.get(`/reservations/${id}`),
     
-  create: (reservationData: any): Promise<AxiosResponse<any>> =>
-    apiClient.post('/reservations', reservationData),
+  create: (data: { terrain_id: number; start: string; end: string; notes?: string }): Promise<AxiosResponse<any>> =>
+    apiClient.post('/reservations', data),
     
-  update: (id: number, reservationData: any): Promise<AxiosResponse<any>> =>
-    apiClient.put(`/reservations/${id}`, reservationData),
-    
-  delete: (id: number): Promise<AxiosResponse<any>> =>
+  cancel: (id: number): Promise<AxiosResponse<any>> =>
     apiClient.delete(`/reservations/${id}`),
-    
-  getAvailability: (terrain_id?: number, date?: string): Promise<AxiosResponse<any[]>> => {
-    const params = new URLSearchParams();
-    if (terrain_id) params.append('terrain_id', terrain_id.toString());
-    if (date) params.append('date', date);
-    return apiClient.get(`/reservations/availability?${params.toString()}`);
-  },
 };
-
-export default apiClient;
