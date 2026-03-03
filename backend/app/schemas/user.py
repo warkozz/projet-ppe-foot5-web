@@ -26,6 +26,7 @@ class UserUpdate(BaseModel):
 
 class UserResponse(UserBase):
     id: int
+    role: str  # lecture seule - non settable par le client
     active: bool
 
     class Config:
