@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './contexts/AuthContext';
 import Navigation from './components/Navigation';
 import Footer from './components/Footer';
+import GlobalNotifications from './components/GlobalNotifications';
 import ProtectedRoute from './components/ProtectedRoute';
 import HomePage from './pages/HomePage';
 import TerrainsPage from './pages/TerrainsPage';
@@ -21,6 +22,7 @@ function App() {
       <Router>
         <div className="App">
           <Navigation />
+          <GlobalNotifications />
           <Routes>
             {/* Pages publiques */}
             <Route path="/" element={<HomePage />} />

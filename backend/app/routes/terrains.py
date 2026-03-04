@@ -170,18 +170,45 @@ def toggle_terrain_active(
     current_user: User = Depends(get_admin_user)
 ):
     """
-    Activer/Désactiver un terrain (Admin uniquement)
+    Activer/Désactiver un terrain (Admin uniquement).
+    Lorsque le terrain est désactivé, toutes les réservations futures
+    confirmed/pending sont automatiquement annulées.
     """
     terrain = db.query(Terrain).filter(Terrain.id == terrain_id).first()
-    
+
     if not terrain:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Terrain not found"
         )
-    
-    terrain.is_active = not terrain.is_active
+
+    # Bascule le statut actif
+    new_active = not terrain.active
+    terrain.active = new_active
+
+    cancelled_count = 0
+    if not new_active:
+        # Annuler toutes les réservations futures confirmed/pending
+        from app.models.reservation import Reservation
+        from datetime import datetime
+        now = datetime.utcnow()
+        future_reservations = (
+            db.query(Reservation)
+            .filter(
+                Reservation.terrain_id == terrain_id,
+                Reservation.status.in_(["confirmed", "pending"]),
+                Reservation.start > now,
+            )
+            .all()
+        )
+        for r in future_reservations:
+            r.status = "cancelled"
+            # Marqueur dans notes pour le frontend
+            marker = "[TERRAIN_DÉSACTIVÉ] Ce terrain a été temporairement fermé. Votre réservation a été annulée automatiquement."
+            r.notes = marker if not r.notes else f"{marker} Note originale : {r.notes}"
+            cancelled_count += 1
+
     db.commit()
     db.refresh(terrain)
-    
+
     return terrain

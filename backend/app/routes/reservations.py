@@ -187,8 +187,21 @@ def update_reservation(
                 detail="Can only modify confirmed or pending reservations"
             )
     
-    # Si on modifie les heures, vérifier la disponibilité
-    if reservation_data.start or reservation_data.end:
+    # Si on change de terrain, vérifier qu'il existe et est actif
+    new_terrain_id = reservation_data.terrain_id or reservation.terrain_id
+    if reservation_data.terrain_id and reservation_data.terrain_id != reservation.terrain_id:
+        new_terrain = db.query(Terrain).filter(
+            Terrain.id == reservation_data.terrain_id,
+            Terrain.active == True
+        ).first()
+        if not new_terrain:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Terrain not found or inactive"
+            )
+
+    # Si on modifie les heures ou le terrain, vérifier la disponibilité
+    if reservation_data.start or reservation_data.end or reservation_data.terrain_id:
         new_start = reservation_data.start or reservation.start
         new_end = reservation_data.end or reservation.end
         
@@ -200,8 +213,10 @@ def update_reservation(
                 detail=message
             )
         
+        # Exclure la réservation courante seulement si on reste sur le même terrain
+        exclude_id = reservation_id if new_terrain_id == reservation.terrain_id else None
         has_conflict, _ = check_reservation_conflict(
-            db, reservation.terrain_id, new_start, new_end, reservation_id
+            db, new_terrain_id, new_start, new_end, exclude_id
         )
         if has_conflict:
             raise HTTPException(
