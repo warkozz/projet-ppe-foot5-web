@@ -21,6 +21,7 @@ class ReservationCreate(ReservationBase):
 
 
 class ReservationUpdate(BaseModel):
+    terrain_id: Optional[int] = Field(None, gt=0)
     start: Optional[datetime] = None
     end: Optional[datetime] = None
     notes: Optional[str] = Field(None, max_length=250)
