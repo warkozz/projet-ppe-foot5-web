@@ -36,16 +36,18 @@ backend/
 - `name` (VARCHAR)
 - `location` (VARCHAR)
 - `active` (BOOLEAN)
+- `price` (DECIMAL 10,2) — Tarif horaire €
+- `capacity` (INT) — Nb joueurs (10 = 5v5)
 
 **reservations**
 - `id` (INT, PRIMARY KEY)
 - `user_id` (INT, FOREIGN KEY)
 - `terrain_id` (INT, FOREIGN KEY)
-- `start` (DATETIME) - Date et heure de début
-- `end` (DATETIME) - Date et heure de fin
+- `start` (DATETIME)
+- `end` (DATETIME)
 - `status` (ENUM: 'pending', 'confirmed', 'cancelled')
 - `notes` (TEXT)
-- `created_at` (TIMESTAMP)
+- `total_cost` (DECIMAL 10,2) — Coût calculé automatiquement
 
 ## Configuration
 

@@ -36,6 +36,8 @@ backend/
 - `name` (VARCHAR)
 - `location` (VARCHAR)
 - `active` (BOOLEAN)
+- `price` (DECIMAL 10,2) — Tarif horaire en euros *(ajouté mars 2026)*
+- `capacity` (INT) — Nombre total de joueurs, ex: 10 = 5v5 *(ajouté mars 2026)*
 
 **reservations**
 - `id` (INT, PRIMARY KEY)
@@ -45,7 +47,7 @@ backend/
 - `end` (DATETIME) - Date et heure de fin
 - `status` (ENUM: 'pending', 'confirmed', 'cancelled')
 - `notes` (TEXT)
-- `created_at` (TIMESTAMP)
+- `total_cost` (DECIMAL 10,2) — Coût calculé à la création *(ajouté mars 2026)*
 
 ## Configuration
 
@@ -115,26 +117,26 @@ curl -X POST "http://localhost:8000/api/auth/login" \
 
 ### Terrains
 
-- `GET /api/terrains` - Liste des terrains actifs
-- `POST /api/terrains` - Créer un terrain (admin)
+- `GET /api/terrains` - Liste des terrains actifs (public)
+- `POST /api/terrains` - Créer un terrain *(admin)* — accepte `price` et `capacity`
 - `GET /api/terrains/{id}` - Détails d'un terrain
-- `PUT /api/terrains/{id}` - Modifier un terrain (admin)
-- `DELETE /api/terrains/{id}` - Supprimer un terrain (admin)
+- `PUT /api/terrains/{id}` - Modifier un terrain *(admin)*
+- `DELETE /api/terrains/{id}` - Supprimer un terrain *(admin)*
+- `PATCH /api/terrains/{id}/toggle-active` - Activer/Désactiver *(admin)*
 
 ### Réservations
 
-- `GET /api/reservations` - Mes réservations
-- `POST /api/reservations` - Créer une réservation
+- `GET /api/reservations` - Mes réservations (admin : toutes)
+- `POST /api/reservations` - Créer une réservation *(quota 2/semaine vérifié, `total_cost` calculé auto)*
 - `GET /api/reservations/{id}` - Détails d'une réservation
 - `PUT /api/reservations/{id}` - Modifier une réservation
 - `DELETE /api/reservations/{id}` - Annuler une réservation
+- `PATCH /api/reservations/{id}/confirm` - Confirmer *(admin)*
 
 ### Disponibilité et planification
 
-- `GET /api/reservations/availability?terrain_id={id}&date={YYYY-MM-DD}` - Créneaux disponibles
-- `GET /api/reservations/terrain/{id}/schedule?date={YYYY-MM-DD}` - Planning d'un terrain
-- `GET /api/reservations/all` - Toutes les réservations (admin)
-- `PUT /api/reservations/{id}/confirm` - Confirmer une réservation (admin)
+- `GET /api/reservations/availability/slots/{terrain_id}?date={YYYY-MM-DD}` - Créneaux disponibles
+- `GET /api/reservations/availability/terrain/{terrain_id}?date={YYYY-MM-DD}` - Planning d'un terrain
 
 ## Logique métier
 

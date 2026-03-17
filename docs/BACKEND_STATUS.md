@@ -1,12 +1,108 @@
 # 🎯 Football Manager 5v5 - Extension Web API
 
-## ✅ Status du Backend
+## ✅ Status du Projet
 
-**📅 Dernière mise à jour**: 8 janvier 2026  
-**🚀 Version**: 1.0.0 - Production Ready  
-**✅ État**: COMPLET et OPÉRATIONNEL
+**📅 Dernière mise à jour**: 17 mars 2026  
+**🚀 Version**: 2.0.0  
+**✅ État**: COMPLET et OPÉRATIONNEL (backend + frontend)
 
-Le backend FastAPI de votre extension web est maintenant **complètement implémenté** et prêt à être utilisé avec votre application desktop Football Manager 5v5.
+---
+
+## 🔧 Fonctionnalités Backend Implémentées
+
+### ✨ Authentification
+- ✅ Système JWT compatible avec l’app desktop
+- ✅ Hashage Bcrypt (12 rounds) identique au desktop
+- ✅ Endpoints : login, register, refresh, profil, mot de passe
+- ✅ Gestion des rôles (user / admin / superadmin)
+
+### 🏙️ Gestion des Terrains
+- ✅ CRUD complet pour les terrains
+- ✅ Permissions admin pour création/modification
+- ✅ Filtrage des terrains actifs
+- ✅ Toggle actif/inactif avec annulation automatique des réservations futures
+- ✅ Champ `price` (tarif horaire en €)
+- ✅ Champ `capacity` (nombre de joueurs, ex : 10 = 5v5)
+
+### 📅 Système de Réservations
+- ✅ Création / modification / annulation
+- ✅ Détection automatique des conflits de créneaux
+- ✅ Génération des créneaux disponibles (8h–20h, tranches de 2h)
+- ✅ Validation des horaires (ouverture 8h–22h, durée 1h–4h)
+- ✅ Calcul automatique du `total_cost` = durée × `price` du terrain
+- ✅ Quota hebdomadaire : max 2 réservations sur 7 jours glissants (configurable via `MAX_WEEKLY_RESERVATIONS`)
+- ✅ Confirmation admin des réservations en attente
+- ✅ Planning des terrains par date
+
+### 🧠 Logique Métier
+- ✅ `total_cost` stocké en base (prix figé au moment de la réservation)
+- ✅ Quota vérifié avant chaque création (HTTP 400 + message clair en français)
+- ✅ Format terrain calculé dynamiquement : `capacity / 2` + "v" + `capacity / 2`
+
+---
+
+## 🎉 Fonctionnalités Frontend Implémentées
+
+### 🔐 Authentification
+- ✅ Formulaire de connexion / inscription
+- ✅ Page profil (modification username, email, mot de passe)
+- ✅ Routes protégées (ProtectedRoute)
+- ✅ Gestion du token JWT en localStorage
+
+### 🏙️ Page Terrains
+- ✅ Grille de cartes par terrain
+- ✅ Format dynamique : `{capacity/2}v{capacity/2}` (plus de "5v5" codé en dur)
+- ✅ Affichage du tarif horaire : `X.XX € / heure`
+- ✅ Badge disponibilité (actif / indisponible)
+
+### 📅 Parcours de Réservation (3 étapes)
+- ✅ Étape 1 : sélection du terrain
+- ✅ Étape 2 : sélection date + créneau + notes
+- ✅ Étape 3 : confirmation avec affichage **durée** + **coût total calculé**
+- ✅ Affichage du message d’erreur de quota dans le formulaire (HTTP 400)
+- ✅ Écran de succès avec redirection vers Mon Espace
+
+### 👤 Mon Espace
+- ✅ Liste des réservations à venir (triées par date croissante)
+- ✅ Historique avec **filtres par statut** : Tout / Annulée / Terminée & Passée
+- ✅ **Tri par date** : récent ↓ / ancien ↑ (bascule)
+- ✅ Modification de réservation (créneau, terrain, notes)
+- ✅ Annulation avec confirmation
+- ✅ Notification terrain fermé avec actions (modifier / réserver ailleurs)
+
+---
+
+## 🗄️ Colonnes SQL Ajoutées (mars 2026)
+
+```sql
+ALTER TABLE terrains ADD COLUMN price DECIMAL(10,2) DEFAULT 0.00;
+ALTER TABLE terrains ADD COLUMN capacity INT DEFAULT 10;
+ALTER TABLE reservations ADD COLUMN total_cost DECIMAL(10,2) DEFAULT 0.00;
+```
+
+> Ces colonnes utilisent des valeurs par défaut — aucun impact sur l’application desktop existante.
+
+---
+
+## 🚀 Démarrage
+
+### Backend
+```bash
+cd backend
+.venv\Scripts\activate
+uvicorn main:app --reload --port 8000
+```
+
+### Frontend
+```bash
+cd frontend
+npm start
+```
+
+- **API** → http://localhost:8000  
+- **Docs interactives** → http://localhost:8000/docs  
+- **Frontend** → http://localhost:3000
+
 
 ## 🔧 Fonctionnalités Implémentées
 
